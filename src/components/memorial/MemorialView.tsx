@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 import { supabase } from '@/lib/supabase'
 import { useParams } from 'next/navigation'
 import { CalendarIcon, PhotoIcon } from '@heroicons/react/24/outline'
+import Image from 'next/image'
 
 interface Memorial {
   id: string
@@ -28,10 +29,15 @@ export default function MemorialView() {
   useEffect(() => {
     const fetchMemorial = async () => {
       try {
+        const memorialId = params?.id as string
+        if (!memorialId) {
+          throw new Error('ID de memorial no válido')
+        }
+
         const { data, error } = await supabase
           .from('plantillas')
           .select('*')
-          .eq('id', params.id)
+          .eq('id', memorialId)
           .single()
 
         if (error) throw error
@@ -44,10 +50,8 @@ export default function MemorialView() {
       }
     }
 
-    if (params.id) {
-      fetchMemorial()
-    }
-  }, [params.id])
+    fetchMemorial()
+  }, [params?.id])
 
   if (loading) {
     return (
@@ -107,11 +111,14 @@ export default function MemorialView() {
           {/* Cabecera con foto */}
           <div className="relative h-64 bg-gray-900">
             {memorial.foto ? (
-              <img
-                src={memorial.foto}
-                alt={getFullName()}
-                className="w-full h-full object-cover opacity-75"
-              />
+              <div className="relative w-full h-full">
+                <Image
+                  src={memorial.foto}
+                  alt={getFullName()}
+                  fill
+                  className="object-cover opacity-75"
+                />
+              </div>
             ) : (
               <div className="w-full h-full bg-gray-800 flex items-center justify-center">
                 <PhotoIcon className="h-24 w-24 text-gray-600" />

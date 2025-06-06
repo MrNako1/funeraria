@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import { supabase } from '@/lib/supabase'
 import { MagnifyingGlassIcon, PhotoIcon } from '@heroicons/react/24/outline'
 import Link from 'next/link'
+import Image from 'next/image'
 
 interface Memorial {
   id: string
@@ -132,11 +133,14 @@ export default function MemorialSearch() {
                 >
                   <div className="aspect-w-16 aspect-h-9 bg-gray-200">
                     {memorial.foto ? (
-                      <img
-                        src={memorial.foto}
-                        alt={getFullName(memorial)}
-                        className="w-full h-full object-cover"
-                      />
+                      <div className="relative w-full h-full">
+                        <Image
+                          src={memorial.foto}
+                          alt={getFullName(memorial)}
+                          fill
+                          className="object-cover"
+                        />
+                      </div>
                     ) : (
                       <div className="w-full h-full flex items-center justify-center bg-gray-100">
                         <PhotoIcon className="h-12 w-12 text-gray-400" />

@@ -7,12 +7,7 @@ import { useAuth } from '@/lib/auth-context';
 import Link from 'next/link';
 import { useRouter, usePathname } from 'next/navigation';
 
-const navigation = [
-  { name: 'Inicio', href: '/', current: true },
-  { name: 'Crear Memorial', href: '/crear', current: false },
-  { name: 'Memoriales', href: '/memoriales', current: false },
-  { name: 'Contacto', href: '/contacto', current: false },
-];
+
 
 function classNames(...classes: string[]) {
   return classes.filter(Boolean).join(' ');
