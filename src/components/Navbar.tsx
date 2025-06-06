@@ -1,14 +1,14 @@
 'use client';
 
 import { Fragment } from 'react';
-import { Disclosure } from '@headlessui/react'; //Menu, Transition
+import { Disclosure, Menu, Transition } from '@headlessui/react';
 import { Bars3Icon, XMarkIcon } from '@heroicons/react/24/outline';
 
 const navigation = [
-  { name: 'Home', href: '#', current: true },
-  { name: 'Services', href: '#', current: false },
-  { name: 'About', href: '#', current: false },
-  { name: 'Contact', href: '#', current: false },
+  { name: 'Inicio', href: '/', current: true },
+  { name: 'Crear Memorial', href: '/crear', current: false },
+  { name: 'Memoriales', href: '/memoriales', current: false },
+  { name: 'Contacto', href: '/contacto', current: false },
 ];
 
 function classNames(...classes: string[]) {
@@ -17,16 +17,16 @@ function classNames(...classes: string[]) {
 
 export default function Navbar() {
   return (
-    <Disclosure as="nav" className="bg-gray-800">
+    <Disclosure as="nav" className="bg-white shadow-sm">
       {({ open }) => (
         <>
-          <div className="mx-auto max-w-7xl px-2 sm:px-6 lg:px-8">
+          <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
             <div className="relative flex h-16 items-center justify-between">
               <div className="absolute inset-y-0 left-0 flex items-center sm:hidden">
                 {/* Mobile menu button*/}
-                <Disclosure.Button className="relative inline-flex items-center justify-center rounded-md p-2 text-gray-400 hover:bg-gray-700 hover:text-white focus:outline-none focus:ring-2 focus:ring-inset focus:ring-white">
+                <Disclosure.Button className="relative inline-flex items-center justify-center rounded-md p-2 text-gray-400 hover:bg-rose-50 hover:text-rose-600 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-rose-500">
                   <span className="absolute -inset-0.5" />
-                  <span className="sr-only">Open main menu</span>
+                  <span className="sr-only">Abrir menú principal</span>
                   {open ? (
                     <XMarkIcon className="block h-6 w-6" aria-hidden="true" />
                   ) : (
@@ -36,7 +36,7 @@ export default function Navbar() {
               </div>
               <div className="flex flex-1 items-center justify-center sm:items-stretch sm:justify-start">
                 <div className="flex flex-shrink-0 items-center">
-                  <span className="text-white text-xl font-bold">Funeraria</span>
+                  <span className="text-rose-600 text-xl font-bold">Recordando con Amor</span>
                 </div>
                 <div className="hidden sm:ml-6 sm:block">
                   <div className="flex space-x-4">
@@ -46,9 +46,9 @@ export default function Navbar() {
                         href={item.href}
                         className={classNames(
                           item.current
-                            ? 'bg-gray-900 text-white'
-                            : 'text-gray-300 hover:bg-gray-700 hover:text-white',
-                          'rounded-md px-3 py-2 text-sm font-medium'
+                            ? 'bg-rose-50 text-rose-600'
+                            : 'text-gray-600 hover:bg-rose-50 hover:text-rose-600',
+                          'rounded-md px-3 py-2 text-sm font-medium transition-colors duration-200'
                         )}
                         aria-current={item.current ? 'page' : undefined}
                       >
@@ -57,6 +57,14 @@ export default function Navbar() {
                     ))}
                   </div>
                 </div>
+              </div>
+              <div className="absolute inset-y-0 right-0 flex items-center pr-2 sm:static sm:inset-auto sm:ml-6 sm:pr-0">
+                <a
+                  href="/crear"
+                  className="rounded-md bg-rose-600 px-3.5 py-2 text-sm font-semibold text-white shadow-sm hover:bg-rose-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-rose-600 transition-colors duration-200"
+                >
+                  Crear Memorial
+                </a>
               </div>
             </div>
           </div>
@@ -70,9 +78,9 @@ export default function Navbar() {
                   href={item.href}
                   className={classNames(
                     item.current
-                      ? 'bg-gray-900 text-white'
-                      : 'text-gray-300 hover:bg-gray-700 hover:text-white',
-                    'block rounded-md px-3 py-2 text-base font-medium'
+                      ? 'bg-rose-50 text-rose-600'
+                      : 'text-gray-600 hover:bg-rose-50 hover:text-rose-600',
+                    'block rounded-md px-3 py-2 text-base font-medium transition-colors duration-200'
                   )}
                   aria-current={item.current ? 'page' : undefined}
                 >
