@@ -24,10 +24,7 @@
     "@types/react-dom": "^19",
     "eslint": "^9",
     "eslint-config-next": "15.3.3",
-<<<<<<< HEAD
     "supabase": "^2.24.3",
-=======
->>>>>>> 9d678f8c6d32b57bbfa10192965dcf006c12b51c
     "tailwindcss": "^4",
     "typescript": "^5"
   }
