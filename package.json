@@ -28,9 +28,13 @@
     "eslint": "^9",
     "eslint-config-next": "15.3.3",
 <<<<<<< HEAD
+<<<<<<< HEAD
 =======
     "supabase": "^2.24.3",
 >>>>>>> d2459e4 (a)
+=======
+    "supabase": "^2.24.3",
+>>>>>>> b1fa1cf (a)
     "tailwindcss": "^4",
     "typescript": "^5"
   }
