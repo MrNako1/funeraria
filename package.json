@@ -10,6 +10,8 @@
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.49.10",
+    "@headlessui/react": "^2.2.4",
+    "@heroicons/react": "^2.2.0",
     "next": "15.3.3",
     "react": "^19.0.0",
     "react-dom": "^19.0.0"
@@ -22,7 +24,10 @@
     "@types/react-dom": "^19",
     "eslint": "^9",
     "eslint-config-next": "15.3.3",
+<<<<<<< HEAD
     "supabase": "^2.24.3",
+=======
+>>>>>>> 9d678f8c6d32b57bbfa10192965dcf006c12b51c
     "tailwindcss": "^4",
     "typescript": "^5"
   }
