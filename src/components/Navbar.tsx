@@ -7,7 +7,28 @@ import { useAuth } from '@/lib/auth-context';
 import Link from 'next/link';
 import { useRouter, usePathname } from 'next/navigation';
 
-
+const navigationItems = [
+  {
+    name: 'Inicio',
+    href: '/',
+    requiresAuth: false
+  },
+  {
+    name: 'Crear Plantilla',
+    href: '/crear-plantilla',
+    requiresAuth: true
+  },
+  {
+    name: 'Seres Queridos',
+    href: '/seres-queridos',
+    requiresAuth: true
+  },
+  {
+    name: 'Buscar Memoriales',
+    href: '/buscar',
+    requiresAuth: false
+  }
+];
 
 function classNames(...classes: string[]) {
   return classes.filter(Boolean).join(' ');
@@ -29,6 +50,30 @@ export default function Navbar() {
 
   const isActive = (path: string) => pathname === path;
 
+  const renderNavItems = (isMobile = false) => {
+    return navigationItems.map((item) => {
+      if (item.requiresAuth && !user) return null;
+      
+      return (
+        <Link
+          key={item.href}
+          href={item.href}
+          className={`text-gray-300 hover:bg-gray-700 hover:text-white ${
+            isMobile ? 'block' : ''
+          } rounded-md px-3 py-2 ${isMobile ? 'text-base' : 'text-sm'} font-medium ${
+            isActive(item.href)
+              ? isMobile
+                ? 'bg-blue-50 border-blue-500 text-blue-700'
+                : 'border-b-2 border-blue-500'
+              : ''
+          }`}
+        >
+          {item.name}
+        </Link>
+      );
+    });
+  };
+
   return (
     <Disclosure as="nav" className="bg-gray-800">
       {({ open }) => (
@@ -43,60 +88,7 @@ export default function Navbar() {
                 </div>
                 <div className="hidden md:block">
                   <div className="ml-10 flex items-baseline space-x-4">
-                    <Link
-                      href="/"
-                      className={`text-gray-300 hover:bg-gray-700 hover:text-white rounded-md px-3 py-2 text-sm font-medium ${
-                        isActive('/')
-                          ? 'border-b-2 border-blue-500'
-                          : ''
-                      }`}
-                    >
-                      Inicio
-                    </Link>
-                    {user && (
-                      <>
-                        <Link
-                          href="/plantillas"
-                          className={`text-gray-300 hover:bg-gray-700 hover:text-white rounded-md px-3 py-2 text-sm font-medium ${
-                            isActive('/plantillas')
-                              ? 'border-b-2 border-blue-500'
-                              : ''
-                          }`}
-                        >
-                          Plantillas
-                        </Link>
-                        <Link
-                          href="/crear-plantilla"
-                          className={`text-gray-300 hover:bg-gray-700 hover:text-white rounded-md px-3 py-2 text-sm font-medium ${
-                            isActive('/crear-plantilla')
-                              ? 'border-b-2 border-blue-500'
-                              : ''
-                          }`}
-                        >
-                          Crear Plantilla
-                        </Link>
-                        <Link
-                          href="/seres-queridos"
-                          className={`text-gray-300 hover:bg-gray-700 hover:text-white rounded-md px-3 py-2 text-sm font-medium ${
-                            isActive('/seres-queridos')
-                              ? 'border-b-2 border-blue-500'
-                              : ''
-                          }`}
-                        >
-                          Seres Queridos
-                        </Link>
-                      </>
-                    )}
-                    <Link
-                      href="/buscar"
-                      className={`text-gray-300 hover:bg-gray-700 hover:text-white rounded-md px-3 py-2 text-sm font-medium ${
-                        isActive('/buscar')
-                          ? 'border-b-2 border-blue-500'
-                          : ''
-                      }`}
-                    >
-                      Buscar Memoriales
-                    </Link>
+                    {renderNavItems()}
                   </div>
                 </div>
               </div>
@@ -163,60 +155,7 @@ export default function Navbar() {
 
           <Disclosure.Panel className="md:hidden">
             <div className="space-y-1 px-2 pb-3 pt-2 sm:px-3">
-              <Link
-                href="/"
-                className={`text-gray-300 hover:bg-gray-700 hover:text-white block rounded-md px-3 py-2 text-base font-medium ${
-                  isActive('/')
-                    ? 'bg-blue-50 border-blue-500 text-blue-700'
-                    : ''
-                }`}
-              >
-                Inicio
-              </Link>
-              {user && (
-                <>
-                  <Link
-                    href="/plantillas"
-                    className={`text-gray-300 hover:bg-gray-700 hover:text-white block rounded-md px-3 py-2 text-base font-medium ${
-                      isActive('/plantillas')
-                        ? 'bg-blue-50 border-blue-500 text-blue-700'
-                        : ''
-                    }`}
-                  >
-                    Plantillas
-                  </Link>
-                  <Link
-                    href="/crear-plantilla"
-                    className={`text-gray-300 hover:bg-gray-700 hover:text-white block rounded-md px-3 py-2 text-base font-medium ${
-                      isActive('/crear-plantilla')
-                        ? 'bg-blue-50 border-blue-500 text-blue-700'
-                        : ''
-                    }`}
-                  >
-                    Crear Plantilla
-                  </Link>
-                  <Link
-                    href="/seres-queridos"
-                    className={`text-gray-300 hover:bg-gray-700 hover:text-white block rounded-md px-3 py-2 text-base font-medium ${
-                      isActive('/seres-queridos')
-                        ? 'bg-blue-50 border-blue-500 text-blue-700'
-                        : ''
-                    }`}
-                  >
-                    Seres Queridos
-                  </Link>
-                </>
-              )}
-              <Link
-                href="/buscar"
-                className={`text-gray-300 hover:bg-gray-700 hover:text-white block rounded-md px-3 py-2 text-base font-medium ${
-                  isActive('/buscar')
-                    ? 'bg-blue-50 border-blue-500 text-blue-700'
-                    : ''
-                }`}
-              >
-                Buscar Memoriales
-              </Link>
+              {renderNavItems(true)}
             </div>
             <div className="border-t border-gray-700 pb-3 pt-4">
               {user ? (
