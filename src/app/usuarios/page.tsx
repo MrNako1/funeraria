@@ -3,42 +3,95 @@
 import { useEffect, useState } from 'react'
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs'
 import { User } from '@supabase/supabase-js'
+import { useRouter } from 'next/navigation'
+import { useAuth } from '@/lib/auth-context'
 
 interface UserWithRole extends User {
   role: string
-}
-
-interface UserRoleData {
-  user_id: string
-  role: string
-  users: User
 }
 
 export default function AdminPage() {
   const [users, setUsers] = useState<UserWithRole[]>([])
   const [loading, setLoading] = useState(true)
   const supabase = createClientComponentClient()
+  const router = useRouter()
+  const { } = useAuth()
 
   useEffect(() => {
-    fetchUsers()
+    const checkSessionAndFetchUsers = async () => {
+      try {
+        // Verificar la sesión actual
+        const { data: { session }, error: sessionError } = await supabase.auth.getSession()
+        
+        if (sessionError) throw sessionError
+        
+        if (!session) {
+          router.push('/auth')
+          return
+        }
+
+        // Verificar si el usuario tiene rol de admin
+        const { data: roleData, error: roleError } = await supabase
+          .from('user_roles')
+          .select('role')
+          .eq('id', session.user.id)
+          .single()
+
+        if (roleError || !roleData || roleData.role !== 'admin') {
+          throw new Error('No tienes permisos de administrador')
+        }
+
+        // Si todo está bien, obtener los usuarios
+        await fetchUsers()
+      } catch (error: unknown) {
+        console.error('Error checking session:', error)
+        if (error instanceof Error && error.message === 'No tienes permisos de administrador') {
+          router.push('/')
+        } else {
+          router.push('/auth')
+        }
+      }
+    }
+
+    checkSessionAndFetchUsers()
   }, [])
 
   const fetchUsers = async () => {
     try {
-      const { data: usersData, error: usersError } = await supabase
-        .from('user_roles')
-        .select('*, users:user_id(*)')
+      // Obtener los datos de usuarios usando la función get_users
+      const { data: authUsers, error: usersError } = await supabase
+        .rpc('get_users')
       
-      if (usersError) throw usersError
+      if (usersError) {
+        if (usersError.message === 'No tienes permisos de administrador') {
+          throw new Error('No tienes permisos de administrador para ver esta página')
+        }
+        throw usersError
+      }
 
-      const formattedUsers = usersData.map((item: UserRoleData) => ({
-        ...item.users,
-        role: item.role
-      }))
+      // Obtener los roles de usuario
+      const { data: rolesData, error: rolesError } = await supabase
+        .from('user_roles')
+        .select('*')
+      
+      if (rolesError) throw rolesError
+
+      // Combinar los datos y asegurar que cumplan con el tipo UserWithRole
+      const formattedUsers: UserWithRole[] = authUsers
+        .map((userData: User) => {
+          const roleData = rolesData.find((role: { id: string; role: string }) => role.id === userData.id)
+          return {
+            ...userData,
+            role: roleData?.role || 'user', // Si no tiene rol asignado, por defecto es 'user'
+            id: userData.id
+          } as UserWithRole
+        })
 
       setUsers(formattedUsers)
-    } catch (error) {
+    } catch (error: unknown) {
       console.error('Error fetching users:', error)
+      const errorMessage = error instanceof Error ? error.message : 'Error al cargar los usuarios'
+      alert(errorMessage)
     } finally {
       setLoading(false)
     }
@@ -121,4 +174,4 @@ export default function AdminPage() {
       </div>
     </div>
   )
-} 
+}

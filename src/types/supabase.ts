@@ -201,7 +201,15 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      get_users: {
+        Args: Record<PropertyKey, never>
+        Returns: {
+          id: string
+          email: string
+          user_metadata: Json
+          created_at: string
+        }[]
+      }
     }
     Enums: {
       [_ in never]: never
