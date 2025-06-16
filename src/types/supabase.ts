@@ -34,6 +34,96 @@ export type Database = {
   }
   public: {
     Tables: {
+      comentarios: {
+        Row: {
+          content: string
+          created_at: string
+          id: string
+          memorial_id: string | null
+          user_id: string | null
+        }
+        Insert: {
+          content: string
+          created_at?: string
+          id?: string
+          memorial_id?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          content?: string
+          created_at?: string
+          id?: string
+          memorial_id?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "comentarios_memorial_id_fkey"
+            columns: ["memorial_id"]
+            isOneToOne: false
+            referencedRelation: "plantillas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      memorial_favorites: {
+        Row: {
+          created_at: string
+          id: string
+          memorial_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          memorial_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          memorial_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "memorial_favorites_memorial_id_fkey"
+            columns: ["memorial_id"]
+            isOneToOne: false
+            referencedRelation: "plantillas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      memorial_photos: {
+        Row: {
+          created_at: string
+          id: string
+          memorial_id: string | null
+          url: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          memorial_id?: string | null
+          url: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          memorial_id?: string | null
+          url?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "memorial_photos_memorial_id_fkey"
+            columns: ["memorial_id"]
+            isOneToOne: false
+            referencedRelation: "plantillas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       plantillas: {
         Row: {
           apellido_materno: string | null
