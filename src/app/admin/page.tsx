@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useCallback } from 'react'
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs'
 import { User } from '@supabase/supabase-js'
 
@@ -19,11 +19,7 @@ export default function AdminPage() {
   const [loading, setLoading] = useState(true)
   const supabase = createClientComponentClient()
 
-  useEffect(() => {
-    fetchUsers()
-  }, [])
-
-  const fetchUsers = async () => {
+  const fetchUsers = useCallback(async () => {
     try {
       const { data: usersData, error: usersError } = await supabase
         .from('user_roles')
@@ -42,7 +38,11 @@ export default function AdminPage() {
     } finally {
       setLoading(false)
     }
-  }
+  }, [supabase])
+
+  useEffect(() => {
+    fetchUsers()
+  }, [fetchUsers])
 
   const updateUserRole = async (userId: string, newRole: string) => {
     try {

@@ -6,9 +6,22 @@ import { useAuth } from '@/lib/auth-context'
 
 interface User {
   id: string
-  email: string
+  email: string | undefined
   role: string
   full_name?: string
+  created_at: string
+}
+
+interface UserRole {
+  user_id: string
+  role: string
+}
+
+interface AuthUser {
+  id: string
+  email: string
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  user_metadata: any
   created_at: string
 }
 
@@ -46,11 +59,11 @@ export default function UserRoleManager() {
       if (rolesError) throw rolesError
 
       // Combinar los datos
-      const formattedUsers: User[] = authUsers.map((userData: any) => {
-        const roleData = rolesData.find((role: any) => role.user_id === userData.id)
+      const formattedUsers: User[] = authUsers.map((userData: AuthUser) => {
+        const roleData = rolesData.find((role: UserRole) => role.user_id === userData.id)
         return {
           id: userData.id,
-          email: userData.email,
+          email: userData.email || 'Sin email',
           role: roleData?.role || 'user',
           full_name: userData.user_metadata?.full_name,
           created_at: userData.created_at

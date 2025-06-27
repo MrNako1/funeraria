@@ -50,7 +50,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
                 user_id: userId,
                 role: 'user'
               })
-          } catch (insertErr) {
+          } catch {
             // Ignorar errores de inserción
             console.log('No se pudo crear rol por defecto, continuando con rol user')
           }
@@ -58,7 +58,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         return 'user'
       }
 
-      return data.role || 'user'
+      return (data.role as UserRole) || 'user'
     } catch (error) {
       console.error('Error in fetchUserRole:', error)
       return 'user'

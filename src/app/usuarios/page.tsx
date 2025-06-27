@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useCallback } from 'react'
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs'
 import { User } from '@supabase/supabase-js'
 import { useRouter } from 'next/navigation'
@@ -17,46 +17,7 @@ export default function AdminPage() {
   const router = useRouter()
   const { } = useAuth()
 
-  useEffect(() => {
-    const checkSessionAndFetchUsers = async () => {
-      try {
-        // Verificar la sesión actual
-        const { data: { session }, error: sessionError } = await supabase.auth.getSession()
-        
-        if (sessionError) throw sessionError
-        
-        if (!session) {
-          router.push('/auth')
-          return
-        }
-
-        // Verificar si el usuario tiene rol de admin
-        const { data: roleData, error: roleError } = await supabase
-          .from('user_roles')
-          .select('role')
-          .eq('id', session.user.id)
-          .single()
-
-        if (roleError || !roleData || roleData.role !== 'admin') {
-          throw new Error('No tienes permisos de administrador')
-        }
-
-        // Si todo está bien, obtener los usuarios
-        await fetchUsers()
-      } catch (error: unknown) {
-        console.error('Error checking session:', error)
-        if (error instanceof Error && error.message === 'No tienes permisos de administrador') {
-          router.push('/')
-        } else {
-          router.push('/auth')
-        }
-      }
-    }
-
-    checkSessionAndFetchUsers()
-  }, [])
-
-  const fetchUsers = async () => {
+  const fetchUsers = useCallback(async () => {
     try {
       // Obtener los datos de usuarios usando la función get_users
       const { data: authUsers, error: usersError } = await supabase
@@ -95,7 +56,46 @@ export default function AdminPage() {
     } finally {
       setLoading(false)
     }
-  }
+  }, [supabase])
+
+  useEffect(() => {
+    const checkSessionAndFetchUsers = async () => {
+      try {
+        // Verificar la sesión actual
+        const { data: { session }, error: sessionError } = await supabase.auth.getSession()
+        
+        if (sessionError) throw sessionError
+        
+        if (!session) {
+          router.push('/auth')
+          return
+        }
+
+        // Verificar si el usuario tiene rol de admin
+        const { data: roleData, error: roleError } = await supabase
+          .from('user_roles')
+          .select('role')
+          .eq('id', session.user.id)
+          .single()
+
+        if (roleError || !roleData || roleData.role !== 'admin') {
+          throw new Error('No tienes permisos de administrador')
+        }
+
+        // Si todo está bien, obtener los usuarios
+        await fetchUsers()
+      } catch (error: unknown) {
+        console.error('Error checking session:', error)
+        if (error instanceof Error && error.message === 'No tienes permisos de administrador') {
+          router.push('/')
+        } else {
+          router.push('/auth')
+        }
+      }
+    }
+
+    checkSessionAndFetchUsers()
+  }, [fetchUsers, router, supabase])
 
   const updateUserRole = async (userId: string, newRole: string) => {
     try {

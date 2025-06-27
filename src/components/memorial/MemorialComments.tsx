@@ -144,7 +144,7 @@ export default function MemorialComments({ memorialId }: MemorialCommentsProps) 
               </div>
             </div>
             <p className="text-slate-700 leading-relaxed whitespace-pre-wrap italic">
-              "{comment.content}"
+              &ldquo;{comment.content}&rdquo;
             </p>
           </div>
         ))}

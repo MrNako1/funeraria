@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { supabase } from '@/lib/supabase'
 import { HeartIcon } from '@heroicons/react/24/outline'
 import { HeartIcon as HeartIconSolid } from '@heroicons/react/24/solid'
@@ -15,13 +15,7 @@ export default function MemorialFavoriteButton({ memorialId }: MemorialFavoriteB
   const [isFavorite, setIsFavorite] = useState(false)
   const [loading, setLoading] = useState(false)
 
-  useEffect(() => {
-    if (user?.id) {
-      checkFavoriteStatus()
-    }
-  }, [user, memorialId])
-
-  const checkFavoriteStatus = async () => {
+  const checkFavoriteStatus = useCallback(async () => {
     if (!user?.id) return
 
     try {
@@ -37,7 +31,13 @@ export default function MemorialFavoriteButton({ memorialId }: MemorialFavoriteB
     } catch (err) {
       console.error('Error al verificar estado de favorito:', err)
     }
-  }
+  }, [user?.id, memorialId])
+
+  useEffect(() => {
+    if (user?.id) {
+      checkFavoriteStatus()
+    }
+  }, [user, memorialId, checkFavoriteStatus])
 
   const toggleFavorite = async () => {
     if (!user?.id) return

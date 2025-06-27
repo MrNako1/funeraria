@@ -143,6 +143,15 @@ export default function MemorialGallery({ memorialId }: MemorialGalleryProps) {
 
   return (
     <div className="relative">
+      {/* Input file oculto */}
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept="image/*"
+        onChange={handleFileChange}
+        className="hidden"
+      />
+      
       <div className="flex justify-between items-center mb-6">
         <h2 className="text-2xl font-light text-slate-800">Galería de Recuerdos</h2>
         <button
