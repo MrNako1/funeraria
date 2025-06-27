@@ -33,7 +33,7 @@ export default function FavoritosPage() {
         const { data, error } = await supabase
           .from('memorial_favorites')
           .select(`
-            memorial:memorial_id (
+            plantilla:memorial_id (
               id,
               primer_nombre,
               segundo_nombre,
@@ -47,8 +47,17 @@ export default function FavoritosPage() {
           .eq('user_id', user.id)
           .order('created_at', { ascending: false })
 
-        if (error) throw error
-        setMemorials(data.map(item => item.memorial))
+        if (error) {
+          console.error('Error de Supabase:', error)
+          throw error
+        }
+        
+        // Filtrar los memoriales que existen y mapear correctamente
+        const validMemorials = data
+          .map(item => item.plantilla)
+          .filter((memorial): memorial is Memorial => memorial !== null)
+        
+        setMemorials(validMemorials)
       } catch (err) {
         console.error('Error al cargar favoritos:', err)
         setError('Error al cargar los memoriales favoritos')

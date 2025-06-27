@@ -16,6 +16,7 @@ export default function MemorialGallery({ memorialId }: MemorialGalleryProps) {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [currentIndex, setCurrentIndex] = useState(0)
+  const [isTransitioning, setIsTransitioning] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   const fetchPhotos = useCallback(async () => {
@@ -114,33 +115,44 @@ export default function MemorialGallery({ memorialId }: MemorialGalleryProps) {
   }
 
   const nextPhoto = () => {
-    setCurrentIndex((prev) => (prev + 1) % photos.length)
+    if (isTransitioning) return
+    setIsTransitioning(true)
+    setTimeout(() => {
+      setCurrentIndex((prev) => (prev + 1) % photos.length)
+      setIsTransitioning(false)
+    }, 300)
   }
 
   const prevPhoto = () => {
-    setCurrentIndex((prev) => (prev - 1 + photos.length) % photos.length)
+    if (isTransitioning) return
+    setIsTransitioning(true)
+    setTimeout(() => {
+      setCurrentIndex((prev) => (prev - 1 + photos.length) % photos.length)
+      setIsTransitioning(false)
+    }, 300)
+  }
+
+  const goToPhoto = (index: number) => {
+    if (isTransitioning || index === currentIndex) return
+    setIsTransitioning(true)
+    setTimeout(() => {
+      setCurrentIndex(index)
+      setIsTransitioning(false)
+    }, 300)
   }
 
   return (
     <div className="relative">
-      <div className="flex justify-between items-center mb-4">
-        <h2 className="text-xl font-semibold">Galería de Fotos</h2>
+      <div className="flex justify-between items-center mb-6">
+        <h2 className="text-2xl font-light text-slate-800">Galería de Recuerdos</h2>
         <button
           onClick={() => fileInputRef.current?.click()}
           disabled={loading}
-          className="flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50"
+          className="flex items-center px-4 py-2 bg-slate-700 text-white rounded-lg hover:bg-slate-800 transition-colors disabled:opacity-50"
         >
           <PhotoIcon className="h-5 w-5 mr-2" />
           {loading ? 'Subiendo...' : 'Agregar Foto'}
         </button>
-        <input
-          ref={fileInputRef}
-          type="file"
-          accept={ALLOWED_FILE_TYPES.join(',')}
-          onChange={handleFileChange}
-          className="hidden"
-          disabled={loading}
-        />
       </div>
 
       {error && (
@@ -155,43 +167,67 @@ export default function MemorialGallery({ memorialId }: MemorialGalleryProps) {
         </div>
       ) : photos.length > 0 ? (
         <div className="relative">
-          <div className="relative h-96 rounded-lg overflow-hidden">
-            <Image
-              src={photos[currentIndex]}
-              alt={`Foto ${currentIndex + 1}`}
-              fill
-              className="object-cover"
-              priority={currentIndex === 0}
-            />
+          <div className="relative h-96 rounded-lg overflow-hidden bg-gray-100">
+            <div 
+              className={`absolute inset-0 transition-opacity duration-700 ease-in-out ${
+                isTransitioning ? 'opacity-0' : 'opacity-100'
+              }`}
+            >
+              <Image
+                src={photos[currentIndex]}
+                alt={`Foto ${currentIndex + 1}`}
+                fill
+                className="object-cover"
+                priority={currentIndex === 0}
+              />
+            </div>
+            
+            {/* Overlay sutil para mejorar la legibilidad de los controles */}
+            <div className="absolute inset-0 bg-gradient-to-t from-black/20 via-transparent to-transparent pointer-events-none" />
           </div>
 
+          {/* Controles de navegación con transiciones suaves */}
           <button
             onClick={prevPhoto}
-            className="absolute left-4 top-1/2 -translate-y-1/2 bg-black/50 text-white p-2 rounded-full hover:bg-black/70 transition-colors"
-            disabled={loading}
+            disabled={loading || isTransitioning}
+            className={`absolute left-4 top-1/2 -translate-y-1/2 bg-black/60 text-white p-3 rounded-full hover:bg-black/80 transition-all duration-300 ease-in-out transform hover:scale-110 ${
+              isTransitioning ? 'opacity-50 cursor-not-allowed' : 'opacity-100'
+            }`}
           >
             <ChevronLeftIcon className="h-6 w-6" />
           </button>
 
           <button
             onClick={nextPhoto}
-            className="absolute right-4 top-1/2 -translate-y-1/2 bg-black/50 text-white p-2 rounded-full hover:bg-black/70 transition-colors"
-            disabled={loading}
+            disabled={loading || isTransitioning}
+            className={`absolute right-4 top-1/2 -translate-y-1/2 bg-black/60 text-white p-3 rounded-full hover:bg-black/80 transition-all duration-300 ease-in-out transform hover:scale-110 ${
+              isTransitioning ? 'opacity-50 cursor-not-allowed' : 'opacity-100'
+            }`}
           >
             <ChevronRightIcon className="h-6 w-6" />
           </button>
 
-          <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex space-x-2">
+          {/* Indicadores de posición con transiciones suaves */}
+          <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex space-x-3">
             {photos.map((_, index) => (
               <button
                 key={index}
-                onClick={() => setCurrentIndex(index)}
-                className={`w-2 h-2 rounded-full transition-colors ${
-                  index === currentIndex ? 'bg-white' : 'bg-white/50'
+                onClick={() => goToPhoto(index)}
+                disabled={loading || isTransitioning}
+                className={`w-3 h-3 rounded-full transition-all duration-300 ease-in-out transform hover:scale-125 ${
+                  index === currentIndex 
+                    ? 'bg-white shadow-lg scale-110' 
+                    : 'bg-white/60 hover:bg-white/80'
+                } ${
+                  isTransitioning ? 'cursor-not-allowed' : 'cursor-pointer'
                 }`}
-                disabled={loading}
               />
             ))}
+          </div>
+
+          {/* Contador de fotos */}
+          <div className="absolute top-4 right-4 bg-black/60 text-white px-3 py-1 rounded-full text-sm font-medium">
+            {currentIndex + 1} / {photos.length}
           </div>
         </div>
       ) : (

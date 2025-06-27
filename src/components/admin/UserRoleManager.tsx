@@ -8,6 +8,8 @@ interface User {
   id: string
   email: string
   role: string
+  full_name?: string
+  created_at: string
 }
 
 export default function UserRoleManager() {
@@ -24,23 +26,41 @@ export default function UserRoleManager() {
   const fetchUsers = async () => {
     try {
       setLoading(true)
-      const { data, error } = await supabase
+      
+      // Obtener usuarios con roles usando la función get_users
+      const { data: authUsers, error: usersError } = await supabase
+        .rpc('get_users')
+      
+      if (usersError) {
+        if (usersError.message === 'No tienes permisos de administrador') {
+          throw new Error('No tienes permisos de administrador para ver esta página')
+        }
+        throw usersError
+      }
+
+      // Obtener los roles de usuario
+      const { data: rolesData, error: rolesError } = await supabase
         .from('user_roles')
-        .select('id, role')
-        .order('created_at', { ascending: false })
+        .select('user_id, role')
+      
+      if (rolesError) throw rolesError
 
-      if (error) throw error
-
-      const formattedUsers = data.map(item => ({
-        id: item.id,
-        email: '',
-        role: item.role
-      }))
+      // Combinar los datos
+      const formattedUsers: User[] = authUsers.map((userData: any) => {
+        const roleData = rolesData.find((role: any) => role.user_id === userData.id)
+        return {
+          id: userData.id,
+          email: userData.email,
+          role: roleData?.role || 'user',
+          full_name: userData.user_metadata?.full_name,
+          created_at: userData.created_at
+        }
+      })
 
       setUsers(formattedUsers)
     } catch (err) {
       console.error('Error al cargar usuarios:', err)
-      setError('Error al cargar la lista de usuarios')
+      setError(err instanceof Error ? err.message : 'Error al cargar la lista de usuarios')
     } finally {
       setLoading(false)
     }
@@ -55,7 +75,7 @@ export default function UserRoleManager() {
       const { error } = await supabase
         .from('user_roles')
         .update({ role: newRole })
-        .eq('id', userId)
+        .eq('user_id', userId)
 
       if (error) throw error
 
@@ -97,10 +117,16 @@ export default function UserRoleManager() {
             <thead className="bg-gray-50">
               <tr>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Usuario
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Email
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Rol Actual
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Fecha de Registro
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Cambiar Rol
@@ -111,10 +137,20 @@ export default function UserRoleManager() {
               {users.map((user) => (
                 <tr key={user.id}>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                    {user.full_name || 'Sin nombre'}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                     {user.email}
                   </td>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
+                      user.role === 'admin' ? 'bg-purple-100 text-purple-800' : 'bg-green-100 text-green-800'
+                    }`}>
+                      {user.role}
+                    </span>
+                  </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    {user.role}
+                    {new Date(user.created_at).toLocaleDateString('es-ES')}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                     <select

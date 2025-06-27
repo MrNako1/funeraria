@@ -33,9 +33,9 @@ export async function middleware(req: NextRequest) {
     data: { session },
   } = await supabase.auth.getSession()
 
-  // Si no hay sesión y la ruta es /admin, redirigir a /login
+  // Si no hay sesión y la ruta es /admin, redirigir a /auth
   if (!session && req.nextUrl.pathname.startsWith('/admin')) {
-    return NextResponse.redirect(new URL('/login', req.url))
+    return NextResponse.redirect(new URL('/auth', req.url))
   }
 
   // Si hay sesión y la ruta es /admin, verificar el rol de administrador

@@ -102,48 +102,57 @@ export default function MemorialComments({ memorialId }: MemorialCommentsProps) 
   }
 
   return (
-    <div className="mt-8">
-      <h2 className="text-2xl font-semibold text-gray-900 mb-4">Comentarios</h2>
+    <div>
+      <h2 className="text-2xl font-light text-slate-800 mb-6 border-b border-slate-200 pb-4">
+        Mensajes de Condolencias
+      </h2>
       
       {/* Formulario de comentario */}
       {user ? (
-        <form onSubmit={handleSubmit} className="mb-6">
+        <form onSubmit={handleSubmit} className="mb-8">
           <div className="mb-4">
             <textarea
               value={newComment}
               onChange={(e) => setNewComment(e.target.value)}
-              placeholder="Escribe un comentario..."
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-              rows={3}
+              placeholder="Deja un mensaje de condolencia o un recuerdo especial..."
+              className="w-full px-4 py-3 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-500 focus:border-slate-500 resize-none"
+              rows={4}
               required
             />
           </div>
           <button
             type="submit"
             disabled={loading || !newComment.trim()}
-            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed"
+            className="px-6 py-2 bg-slate-700 text-white rounded-lg hover:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-slate-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
           >
-            {loading ? 'Publicando...' : 'Publicar comentario'}
+            {loading ? 'Enviando...' : 'Enviar Mensaje'}
           </button>
         </form>
       ) : (
-        <p className="text-gray-600 mb-6">Inicia sesión para dejar un comentario</p>
+        <div className="bg-slate-50 rounded-lg p-6 mb-8 text-center">
+          <p className="text-slate-600">Inicia sesión para dejar un mensaje de condolencia</p>
+        </div>
       )}
 
       {/* Lista de comentarios */}
-      <div className="space-y-4">
+      <div className="space-y-6">
         {comments.map((comment) => (
-          <div key={comment.id} className="bg-gray-50 rounded-lg p-4">
-            <div className="flex justify-between items-start mb-2">
+          <div key={comment.id} className="bg-slate-50 rounded-lg p-6 border-l-4 border-slate-300">
+            <div className="flex justify-between items-start mb-3">
               <div>
-                <p className="text-sm text-gray-500">{formatDate(comment.created_at)}</p>
+                <p className="text-sm text-slate-500 font-medium">{formatDate(comment.created_at)}</p>
               </div>
             </div>
-            <p className="text-gray-700 whitespace-pre-wrap">{comment.content}</p>
+            <p className="text-slate-700 leading-relaxed whitespace-pre-wrap italic">
+              "{comment.content}"
+            </p>
           </div>
         ))}
         {comments.length === 0 && (
-          <p className="text-gray-500 text-center py-4">No hay comentarios aún</p>
+          <div className="text-center py-12">
+            <p className="text-slate-500 text-lg">No hay mensajes aún</p>
+            <p className="text-slate-400 text-sm mt-2">Sé el primero en dejar un mensaje de condolencia</p>
+          </div>
         )}
       </div>
     </div>
