@@ -1,11 +1,12 @@
 'use client'
 
-import { createContext, useContext, useEffect, useState } from 'react'
+import { createContext, useContext, useEffect, useState, useCallback } from 'react'
 import { User } from '@supabase/supabase-js'
 import { useRouter } from 'next/navigation'
 import { supabase } from './supabase'
 
-type UserRole = 'user' | 'admin'
+// Actualizar el tipo de rol para incluir 'cliente'
+type UserRole = 'user' | 'admin' | 'cliente'
 
 interface UserWithRole extends User {
   role?: UserRole
@@ -20,6 +21,7 @@ type AuthContextType = {
   signOut: () => Promise<void>
   resetPassword: (email: string) => Promise<void>
   updateProfile: (updates: { full_name?: string; avatar_url?: string }) => Promise<void>
+  clearSession: () => Promise<void>
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined)
@@ -32,53 +34,81 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const fetchUserRole = async (userId: string): Promise<UserRole> => {
     try {
-      // Intentar obtener el rol del usuario
+      console.log('🔍 Buscando rol para usuario:', userId)
+      
+      // Intentar obtener el rol del usuario usando una consulta más simple
       const { data, error } = await supabase
         .from('user_roles')
         .select('role')
-        .eq('user_id', userId)
+        .filter('user_id', 'eq', userId)
         .maybeSingle()
+
+      console.log('📊 Resultado de fetchUserRole:', { data, error })
 
       // Si hay un error o no hay datos, usar rol por defecto
       if (error || !data) {
+        console.log('⚠️ No se encontró rol, creando rol por defecto...')
+        
         // Intentar crear un rol por defecto solo si no hay error de permisos
         if (!error || (error.code !== 'PGRST116' && error.code !== '500')) {
           try {
-            await supabase
-              .from('user_roles')
-              .insert({
-                user_id: userId,
-                role: 'user'
+            // Usar una función RPC para insertar el rol por defecto
+            const { error: insertError } = await supabase
+              .rpc('assign_user_role', {
+                user_uuid: userId,
+                user_role: 'user'
               })
-          } catch {
-            // Ignorar errores de inserción
-            console.log('No se pudo crear rol por defecto, continuando con rol user')
+            
+            if (insertError) {
+              console.log('❌ Error creando rol por defecto:', insertError)
+            } else {
+              console.log('✅ Rol por defecto creado exitosamente')
+            }
+          } catch (insertError) {
+            console.log('❌ Error en inserción de rol por defecto:', insertError)
           }
         }
         return 'user'
       }
 
-      return (data.role as UserRole) || 'user'
+      // Verificar que data tenga la propiedad role y sea del tipo correcto
+      if (data && typeof data === 'object' && 'role' in data) {
+        console.log('✅ Rol encontrado:', data.role)
+        return (data.role as UserRole) || 'user'
+      }
+
+      console.log('⚠️ Data no tiene la estructura esperada, usando rol por defecto')
+      return 'user'
     } catch (error) {
-      console.error('Error in fetchUserRole:', error)
+      console.error('❌ Error in fetchUserRole:', error)
       return 'user'
     }
   }
 
-  const updateUserWithRole = async (user: User | null) => {
+  const updateUserWithRole = useCallback(async (user: User | null) => {
     try {
+      console.log('🔄 updateUserWithRole llamado con:', user?.email)
+      
       if (user) {
+        console.log('👤 Usuario encontrado, obteniendo rol...')
         const role = await fetchUserRole(user.id)
-        setUser({ ...user, role })
+        console.log('🎭 Rol obtenido:', role)
+        
+        const userWithRole = { ...user, role }
+        console.log('✅ Usuario con rol configurado:', userWithRole.email, 'Rol:', role)
+        
+        setUser(userWithRole)
         setUserRole(role)
       } else {
+        console.log('📭 No hay usuario, limpiando estado...')
         setUser(null)
         setUserRole(null)
       }
     } catch (error) {
-      console.error('Error updating user with role:', error)
+      console.error('❌ Error updating user with role:', error)
       // En caso de error, establecer el usuario sin rol
       if (user) {
+        console.log('🔄 Estableciendo usuario con rol por defecto debido a error')
         setUser({ ...user, role: 'user' })
         setUserRole('user')
       } else {
@@ -86,22 +116,74 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         setUserRole(null)
       }
     }
+  }, [])
+
+  const clearSession = async () => {
+    try {
+      console.log('🧹 Limpiando sesión completamente...')
+      
+      // Limpiar estado local
+      setUser(null)
+      setUserRole(null)
+      
+      // Limpiar localStorage y sessionStorage
+      localStorage.clear()
+      sessionStorage.clear()
+      
+      // Limpiar todas las cookies
+      document.cookie.split(";").forEach(function(c) { 
+        document.cookie = c.replace(/^ +/, "").replace(/=.*/, "=;expires=" + new Date().toUTCString() + ";path=/"); 
+      })
+      
+      // Llamar a Supabase signOut
+      await supabase.auth.signOut()
+      
+      console.log('✅ Sesión limpiada completamente')
+    } catch (error) {
+      console.error('❌ Error limpiando sesión:', error)
+    }
   }
 
   useEffect(() => {
-    // Verificar sesión actual
-    supabase.auth.getSession().then(async ({ data: { session } }) => {
-      if (session?.user) {
-        await updateUserWithRole(session.user)
-      } else {
+    // Verificar si hay una sesión persistente no deseada
+    const checkForUnwantedSession = async () => {
+      try {
+        const { data: { session }, error } = await supabase.auth.getSession()
+        
+        if (error) {
+          console.error('Error obteniendo sesión:', error)
+          setLoading(false)
+          return
+        }
+
+        // Si hay una sesión, verificar si es la que queremos
+        if (session?.user) {
+          console.log('🔍 Sesión encontrada:', session.user.email)
+          
+          // Aquí puedes agregar lógica para verificar si la sesión es válida
+          // Por ejemplo, verificar si el usuario existe en tu base de datos
+          
+          await updateUserWithRole(session.user)
+        } else {
+          console.log('📭 No hay sesión activa')
+          setUser(null)
+          setUserRole(null)
+        }
+      } catch (error) {
+        console.error('Error verificando sesión:', error)
         setUser(null)
         setUserRole(null)
+      } finally {
+        setLoading(false)
       }
-      setLoading(false)
-    })
+    }
+
+    checkForUnwantedSession()
 
     // Escuchar cambios en la autenticación
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
+      console.log('🔄 Cambio de estado de autenticación:', _event)
+      
       if (session?.user) {
         await updateUserWithRole(session.user)
       } else {
@@ -111,33 +193,84 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     })
 
     return () => subscription.unsubscribe()
-  }, [])
+  }, [updateUserWithRole])
 
   const signIn = async (email: string, password: string) => {
-    const { error } = await supabase.auth.signInWithPassword({ email, password })
-    if (error) throw error
-    
-    // Redirigir al inicio después del login exitoso
-    // Usar setTimeout para asegurar que el estado se actualice primero
-    setTimeout(() => {
-      router.push('/')
-    }, 100)
+    try {
+      console.log('🔐 Iniciando login para:', email)
+      
+      const { error } = await supabase.auth.signInWithPassword({ email, password })
+      if (error) throw error
+      
+      console.log('✅ Login exitoso')
+      
+      // Redirigir al inicio después del login exitoso
+      setTimeout(() => {
+        router.push('/')
+      }, 100)
+    } catch (error) {
+      console.error('❌ Error en login:', error)
+      throw error
+    }
   }
 
   const signUp = async (email: string, password: string) => {
-    const { error } = await supabase.auth.signUp({ 
-      email, 
-      password,
-      options: {
-        emailRedirectTo: `${window.location.origin}/auth/callback`
-      }
-    })
-    if (error) throw error
+    try {
+      console.log('📝 Registrando usuario:', email)
+      
+      const { error } = await supabase.auth.signUp({ 
+        email, 
+        password,
+        options: {
+          emailRedirectTo: `${window.location.origin}/auth/callback`
+        }
+      })
+      if (error) throw error
+      
+      console.log('✅ Registro exitoso')
+    } catch (error) {
+      console.error('❌ Error en registro:', error)
+      throw error
+    }
   }
 
   const signOut = async () => {
-    const { error } = await supabase.auth.signOut()
-    if (error) throw error
+    try {
+      console.log('🔄 Iniciando signOut en AuthContext...');
+      
+      // Limpiar el estado local primero
+      setUser(null);
+      setUserRole(null);
+      
+      // Llamar a Supabase signOut
+      const { error } = await supabase.auth.signOut();
+      
+      if (error) {
+        console.error('❌ Error en Supabase signOut:', error);
+        throw error;
+      }
+      
+      console.log('✅ Supabase signOut exitoso');
+      
+      // Limpiar cookies y localStorage
+      try {
+        localStorage.removeItem('supabase.auth.token');
+        sessionStorage.clear();
+        
+        // Limpiar cookies de Supabase
+        document.cookie.split(";").forEach(function(c) { 
+          document.cookie = c.replace(/^ +/, "").replace(/=.*/, "=;expires=" + new Date().toUTCString() + ";path=/"); 
+        });
+        
+        console.log('✅ Estado local limpiado');
+      } catch (cleanupError) {
+        console.warn('⚠️ Error limpiando estado local:', cleanupError);
+      }
+      
+    } catch (error) {
+      console.error('❌ Error en signOut:', error);
+      throw error;
+    }
   }
 
   const resetPassword = async (email: string) => {
@@ -170,7 +303,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       signUp, 
       signOut, 
       resetPassword, 
-      updateProfile 
+      updateProfile,
+      clearSession
     }}>
       {children}
     </AuthContext.Provider>

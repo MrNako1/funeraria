@@ -37,11 +37,13 @@ export default function MemorialView() {
         const { data, error } = await supabase
           .from('plantillas')
           .select('*')
-          .eq('id', memorialId)
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          .eq('id', memorialId as any)
           .single()
 
         if (error) throw error
-        setMemorial(data)
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        setMemorial(data as any)
       } catch (err) {
         console.error('Error al cargar el memorial:', err)
         setError('Error al cargar el memorial')

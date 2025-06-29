@@ -27,11 +27,13 @@ export default function MemorialComments({ memorialId }: MemorialCommentsProps) 
       const { data, error } = await supabase
         .from('comentarios')
         .select('*')
-        .eq('memorial_id', memorialId)
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        .eq('memorial_id', memorialId as any)
         .order('created_at', { ascending: false })
 
       if (error) throw error
-      setComments(data || [])
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      setComments((data as any) || [])
     } catch (error) {
       console.error('Error al cargar comentarios:', error)
     }
@@ -80,7 +82,8 @@ export default function MemorialComments({ memorialId }: MemorialCommentsProps) 
             user_id: user.id,
             content: newComment.trim()
           }
-        ])
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        ] as any)
 
       if (error) throw error
       setNewComment('')

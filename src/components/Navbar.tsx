@@ -35,16 +35,43 @@ function classNames(...classes: string[]) {
 }
 
 export default function Navbar() {
-  const { user, signOut } = useAuth();
+  const { user, userRole, signOut } = useAuth();
   const router = useRouter();
   const pathname = usePathname();
 
   const handleSignOut = async () => {
     try {
+      console.log('🔄 Iniciando proceso de logout...');
+      
+      // Mostrar indicador de loading
+      const button = event?.target as HTMLButtonElement;
+      if (button) {
+        button.disabled = true;
+        button.textContent = 'Cerrando sesión...';
+      }
+      
       await signOut();
+      console.log('✅ Logout exitoso');
+      
+      // Limpiar cualquier estado local si es necesario
+      localStorage.removeItem('supabase.auth.token');
+      sessionStorage.clear();
+      
+      // Redirigir a la página de login
       router.push('/auth');
+      
     } catch (error) {
-      console.error('Error al cerrar sesión:', error);
+      console.error('❌ Error al cerrar sesión:', error);
+      
+      // Restaurar el botón si hay error
+      const button = event?.target as HTMLButtonElement;
+      if (button) {
+        button.disabled = false;
+        button.textContent = 'Cerrar Sesión';
+      }
+      
+      // Mostrar mensaje de error al usuario
+      alert('Error al cerrar sesión. Por favor, intenta de nuevo.');
     }
   };
 
@@ -89,6 +116,19 @@ export default function Navbar() {
                 <div className="hidden md:block">
                   <div className="ml-10 flex items-baseline space-x-4">
                     {renderNavItems()}
+                    {/* Enlace de administración solo para admins */}
+                    {userRole === 'admin' && (
+                      <Link
+                        href="/admin"
+                        className={`text-gray-300 hover:bg-gray-700 hover:text-white rounded-md px-3 py-2 text-sm font-medium ${
+                          isActive('/admin')
+                            ? 'border-b-2 border-blue-500'
+                            : ''
+                        }`}
+                      >
+                        Administración
+                      </Link>
+                    )}
                   </div>
                 </div>
               </div>
@@ -114,13 +154,41 @@ export default function Navbar() {
                         leaveTo="transform opacity-0 scale-95"
                       >
                         <Menu.Items className="absolute right-0 z-10 mt-2 w-48 origin-top-right rounded-md bg-white py-1 shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none">
+                          {userRole === 'admin' && (
+                            <Menu.Item>
+                              {({ active }) => (
+                                <Link
+                                  href="/admin"
+                                  className={classNames(
+                                    active ? 'bg-gray-100' : '',
+                                    'block px-4 py-2 text-sm text-gray-700'
+                                  )}
+                                >
+                                  Panel de Administración
+                                </Link>
+                              )}
+                            </Menu.Item>
+                          )}
+                          <Menu.Item>
+                            {({ active }) => (
+                              <Link
+                                href="/perfil"
+                                className={classNames(
+                                  active ? 'bg-gray-100' : '',
+                                  'block px-4 py-2 text-sm text-gray-700'
+                                )}
+                              >
+                                Mi Perfil
+                              </Link>
+                            )}
+                          </Menu.Item>
                           <Menu.Item>
                             {({ active }) => (
                               <button
                                 onClick={handleSignOut}
                                 className={classNames(
                                   active ? 'bg-gray-100' : '',
-                                  'block w-full px-4 py-2 text-left text-sm text-gray-700'
+                                  'block w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-red-50 hover:text-red-700'
                                 )}
                               >
                                 Cerrar Sesión
@@ -156,6 +224,19 @@ export default function Navbar() {
           <Disclosure.Panel className="md:hidden">
             <div className="space-y-1 px-2 pb-3 pt-2 sm:px-3">
               {renderNavItems(true)}
+              {/* Enlace de administración solo para admins en móvil */}
+              {userRole === 'admin' && (
+                <Link
+                  href="/admin"
+                  className={`block rounded-md px-3 py-2 text-base font-medium ${
+                    isActive('/admin')
+                      ? 'bg-blue-50 border-blue-500 text-blue-700'
+                      : 'text-gray-400 hover:bg-gray-700 hover:text-white'
+                  }`}
+                >
+                  Administración
+                </Link>
+              )}
             </div>
             <div className="border-t border-gray-700 pb-3 pt-4">
               {user ? (
@@ -169,6 +250,11 @@ export default function Navbar() {
                     <div className="text-base font-medium leading-none text-white">
                       {user.email}
                     </div>
+                    {userRole === 'admin' && (
+                      <div className="text-sm text-gray-400">
+                        Administrador
+                      </div>
+                    )}
                   </div>
                 </div>
               ) : (
@@ -182,6 +268,17 @@ export default function Navbar() {
                 </div>
               )}
             </div>
+            {/* Botón de logout en móvil */}
+            {user && (
+              <div className="border-t border-gray-700 px-2 py-3">
+                <button
+                  onClick={handleSignOut}
+                  className="block w-full text-left px-3 py-2 text-base font-medium text-red-400 hover:bg-red-700 hover:text-white rounded-md"
+                >
+                  Cerrar Sesión
+                </button>
+              </div>
+            )}
           </Disclosure.Panel>
         </>
       )}

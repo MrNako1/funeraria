@@ -12,11 +12,6 @@ interface User {
   created_at: string
 }
 
-interface UserRole {
-  user_id: string
-  role: string
-}
-
 interface AuthUser {
   id: string
   email: string
@@ -51,6 +46,11 @@ export default function UserRoleManager() {
         throw usersError
       }
 
+      // Verificar que authUsers sea un array
+      if (!authUsers || !Array.isArray(authUsers)) {
+        throw new Error('Datos de usuarios inválidos')
+      }
+
       // Obtener los roles de usuario
       const { data: rolesData, error: rolesError } = await supabase
         .from('user_roles')
@@ -59,8 +59,10 @@ export default function UserRoleManager() {
       if (rolesError) throw rolesError
 
       // Combinar los datos
-      const formattedUsers: User[] = authUsers.map((userData: AuthUser) => {
-        const roleData = rolesData.find((role: UserRole) => role.user_id === userData.id)
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const formattedUsers: User[] = (authUsers as any[]).map((userData: AuthUser) => {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const roleData = (rolesData as any[]).find((role: any) => role.user_id === userData.id)
         return {
           id: userData.id,
           email: userData.email || 'Sin email',
@@ -87,8 +89,10 @@ export default function UserRoleManager() {
 
       const { error } = await supabase
         .from('user_roles')
-        .update({ role: newRole })
-        .eq('user_id', userId)
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        .update({ role: newRole } as any)
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        .eq('user_id', userId as any)
 
       if (error) throw error
 

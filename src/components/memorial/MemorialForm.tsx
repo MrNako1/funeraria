@@ -81,7 +81,8 @@ export default function MemorialForm() {
             ...formData,
             foto: fotoUrl
           }
-        ])
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        ] as any)
         .select()
 
       if (insertError) throw insertError
@@ -89,8 +90,10 @@ export default function MemorialForm() {
       setSuccess(true)
       
       if (data && data[0]) {
-        setCreatedMemorialId(data[0].id)
-        router.push(`/memorial/${data[0].id}`)
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        setCreatedMemorialId((data[0] as any).id)
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        router.push(`/memorial/${(data[0] as any).id}`)
       }
 
       setFormData({

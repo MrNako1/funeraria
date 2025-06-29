@@ -25,12 +25,14 @@ export default function MemorialGallery({ memorialId }: MemorialGalleryProps) {
       const { data, error } = await supabase
         .from('memorial_photos')
         .select('url')
-        .eq('memorial_id', memorialId)
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        .eq('memorial_id', memorialId as any)
         .order('created_at', { ascending: false })
 
       if (error) throw error
-      if (data) {
-        setPhotos(data.map(photo => photo.url))
+      if (data && Array.isArray(data)) {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        setPhotos((data as any[]).map(photo => photo.url))
       }
     } catch (err) {
       console.error('Error al cargar las fotos:', err)
@@ -94,9 +96,11 @@ export default function MemorialGallery({ memorialId }: MemorialGalleryProps) {
       const { error: insertError } = await supabase
         .from('memorial_photos')
         .insert({
-          memorial_id: memorialId,
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          memorial_id: memorialId as any,
           url: publicUrl
-        })
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        } as any)
 
       if (insertError) throw insertError
 

@@ -7,7 +7,7 @@ import ProtectedRoute from '@/components/auth/ProtectedRoute'
 
 export default function ProfilePage() {
   const { user, updateProfile, signOut } = useAuth()
-  const { isAdmin } = useRole()
+  const { role } = useRole()
   const [fullName, setFullName] = useState(user?.user_metadata?.full_name || '')
   const [isEditing, setIsEditing] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
@@ -101,9 +101,9 @@ export default function ProfilePage() {
                   Rol
                 </label>
                 <span className={`px-3 py-1 text-sm font-semibold rounded-full ${
-                  isAdmin ? 'bg-purple-100 text-purple-800' : 'bg-green-100 text-green-800'
+                  role === 'admin' ? 'bg-purple-100 text-purple-800' : 'bg-green-100 text-green-800'
                 }`}>
-                  {isAdmin ? 'Administrador' : 'Usuario'}
+                  {role === 'admin' ? 'Administrador' : 'Usuario'}
                 </span>
               </div>
 

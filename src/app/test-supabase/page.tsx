@@ -19,7 +19,8 @@ export default function TestSupabase() {
 
         if (error) throw error
 
-        setPlantillas(data || [])
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        setPlantillas((data as any) || [])
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Error desconocido')
       } finally {

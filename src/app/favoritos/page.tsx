@@ -44,7 +44,8 @@ export default function FavoritosPage() {
               foto
             )
           `)
-          .eq('user_id', user.id)
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          .eq('user_id', user.id as any)
           .order('created_at', { ascending: false })
 
         if (error) {
@@ -52,8 +53,13 @@ export default function FavoritosPage() {
           throw error
         }
         
+        // Verificar que data existe y no es un error
+        if (!data || Array.isArray(data) === false) {
+          throw new Error('Datos inválidos recibidos de Supabase')
+        }
+        
         // Filtrar los memoriales que existen y mapear correctamente
-        const validMemorials = data
+        const validMemorials = (data as unknown as Array<{ plantilla: Memorial | null }>)
           .map(item => item.plantilla)
           .filter((memorial): memorial is Memorial => memorial !== null)
         

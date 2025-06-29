@@ -40,7 +40,8 @@ export default function MemorialSearch() {
         .order('fecha_fallecimiento', { ascending: false })
 
       if (error) throw error
-      setMemorials(data || [])
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      setMemorials((data as any[]) || [])
     } catch (err) {
       console.error('Error al buscar memoriales:', err)
       setError('Error al buscar memoriales')

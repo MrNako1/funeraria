@@ -6,7 +6,9 @@
     "dev": "next dev --turbopack",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "make-admin": "node scripts/make-admin.js",
+    "check-auth": "node scripts/check-auth.js"
   },
   "dependencies": {
     "@headlessui/react": "^2.2.4",
@@ -17,7 +19,8 @@
     "next": "15.3.3",
     "qrcode.react": "^4.2.0",
     "react": "^19.0.0",
-    "react-dom": "^19.0.0"
+    "react-dom": "^19.0.0",
+    "react-hot-toast": "^2.5.2"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3",

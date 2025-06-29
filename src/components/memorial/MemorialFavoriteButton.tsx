@@ -22,8 +22,10 @@ export default function MemorialFavoriteButton({ memorialId }: MemorialFavoriteB
       const { data, error } = await supabase
         .from('memorial_favorites')
         .select('id')
-        .eq('user_id', user.id)
-        .eq('memorial_id', memorialId)
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        .eq('user_id', user.id as any)
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        .eq('memorial_id', memorialId as any)
         .maybeSingle()
 
       if (error) throw error
@@ -49,7 +51,7 @@ export default function MemorialFavoriteButton({ memorialId }: MemorialFavoriteB
           .from('memorial_favorites')
           .delete()
           .match({
-            user_id: user.id,
+            user_id: user.id as unknown as string,
             memorial_id: memorialId
           })
 
@@ -58,9 +60,10 @@ export default function MemorialFavoriteButton({ memorialId }: MemorialFavoriteB
         const { error } = await supabase
           .from('memorial_favorites')
           .insert({
-            user_id: user.id,
+            user_id: user.id as unknown as string,
             memorial_id: memorialId
-          })
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          } as any)
 
         if (error) throw error
       }

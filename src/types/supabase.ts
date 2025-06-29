@@ -207,6 +207,27 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      assign_cliente_role: {
+        Args: { user_email: string }
+        Returns: undefined
+      }
+      assign_user_role: {
+        Args: { user_uuid: string; user_role: string }
+        Returns: undefined
+      }
+      delete_user_account: {
+        Args: { target_user_id: string }
+        Returns: boolean
+      }
+      get_all_users_with_emails: {
+        Args: Record<PropertyKey, never>
+        Returns: {
+          id: string
+          email: string
+          created_at: string
+          role: string
+        }[]
+      }
       get_users: {
         Args: Record<PropertyKey, never>
         Returns: {
@@ -215,6 +236,50 @@ export type Database = {
           user_metadata: Json
           created_at: string
         }[]
+      }
+      get_users_simple: {
+        Args: Record<PropertyKey, never>
+        Returns: {
+          id: string
+          email: string
+          created_at: string
+          role: string
+        }[]
+      }
+      get_users_via_view: {
+        Args: Record<PropertyKey, never>
+        Returns: {
+          id: string
+          email: string
+          created_at: string
+          role: string
+        }[]
+      }
+      get_users_with_emails: {
+        Args: Record<PropertyKey, never>
+        Returns: {
+          id: string
+          email: string
+          created_at: string
+          role: string
+        }[]
+      }
+      get_users_with_roles: {
+        Args: Record<PropertyKey, never>
+        Returns: {
+          id: string
+          email: string
+          created_at: string
+          role: string
+        }[]
+      }
+      is_admin: {
+        Args: { user_uuid?: string }
+        Returns: boolean
+      }
+      update_user_role: {
+        Args: { target_user_id: string; new_role: string }
+        Returns: boolean
       }
     }
     Enums: {
