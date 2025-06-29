@@ -30,6 +30,49 @@ const navigationItems = [
   }
 ];
 
+// Navegación específica para usuarios normales
+const userNavigationItems = [
+  {
+    name: 'Inicio',
+    href: '/',
+    requiresAuth: false
+  },
+  {
+    name: 'Seres Queridos',
+    href: '/seres-queridos',
+    requiresAuth: true
+  },
+  {
+    name: 'Buscar Memoriales',
+    href: '/buscar',
+    requiresAuth: false
+  }
+];
+
+// Navegación específica para clientes
+const clienteNavigationItems = [
+  {
+    name: 'Inicio',
+    href: '/cliente',
+    requiresAuth: true
+  },
+  {
+    name: 'Crear Plantilla',
+    href: '/crear-plantilla',
+    requiresAuth: true
+  },
+  {
+    name: 'Seres Queridos',
+    href: '/seres-queridos',
+    requiresAuth: true
+  },
+  {
+    name: 'Buscar Memoriales',
+    href: '/buscar',
+    requiresAuth: false
+  }
+];
+
 function classNames(...classes: string[]) {
   return classes.filter(Boolean).join(' ');
 }
@@ -39,7 +82,7 @@ export default function Navbar() {
   const router = useRouter();
   const pathname = usePathname();
 
-  const handleSignOut = async () => {
+  const handleSignOut = async (event?: React.MouseEvent<HTMLButtonElement>) => {
     try {
       console.log('🔄 Iniciando proceso de logout...');
       
@@ -77,8 +120,20 @@ export default function Navbar() {
 
   const isActive = (path: string) => pathname === path;
 
+  // Determinar qué navegación mostrar basado en el rol del usuario
+  const getNavigationItems = () => {
+    if (userRole === 'cliente') {
+      return clienteNavigationItems;
+    } else if (userRole === 'user') {
+      return userNavigationItems;
+    }
+    return navigationItems;
+  };
+
   const renderNavItems = (isMobile = false) => {
-    return navigationItems.map((item) => {
+    const items = getNavigationItems();
+    
+    return items.map((item) => {
       if (item.requiresAuth && !user) return null;
       
       return (
@@ -253,6 +308,16 @@ export default function Navbar() {
                     {userRole === 'admin' && (
                       <div className="text-sm text-gray-400">
                         Administrador
+                      </div>
+                    )}
+                    {userRole === 'cliente' && (
+                      <div className="text-sm text-gray-400">
+                        Cliente
+                      </div>
+                    )}
+                    {userRole === 'user' && (
+                      <div className="text-sm text-gray-400">
+                        Usuario
                       </div>
                     )}
                   </div>

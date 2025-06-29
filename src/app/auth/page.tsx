@@ -25,6 +25,18 @@ interface SupabaseError {
   hint?: string
 }
 
+interface ErrorWithMessage {
+  message: string
+}
+
+interface ErrorWithDescription {
+  error_description: string
+}
+
+interface ErrorWithDetails {
+  details: string
+}
+
 export default function AuthPage() {
   const [isLogin, setIsLogin] = useState(true)
   const [email, setEmail] = useState('')
@@ -205,22 +217,71 @@ export default function AuthPage() {
       setMessageType('')
 
       console.log(`🔄 Actualizando rol de ${editingUser.email} a ${newRole}`)
+      console.log('📊 Datos de actualización:', { user_id: editingUser.id, role: newRole })
 
-      // Actualizar el rol en la base de datos
-      const updateData = {
-        user_id: editingUser.id,
-        role: newRole
-      }
-      
-      const { error } = await supabase
+      // Primero verificar el rol actual
+      const { data: currentRole } = await supabase
         .from('user_roles')
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        .upsert(updateData as any, {
-          onConflict: 'user_id'
-        })
+        .select('role')
+        .eq('user_id', editingUser.id)
+        .maybeSingle()
 
-      if (error) {
-        throw error
+      console.log('📊 Rol actual:', currentRole?.role || 'user')
+
+      let updateSuccess = false
+
+      // Intentar primero con la función RPC
+      try {
+        console.log('🔄 Intentando con función RPC...')
+        const { data: rpcData, error } = await supabase
+          .rpc('assign_user_role', {
+            user_uuid: editingUser.id,
+            user_role: newRole
+          })
+
+        console.log('📊 Respuesta RPC:', { data: rpcData, error })
+
+        if (!error) {
+          updateSuccess = true
+          console.log('✅ Función RPC exitosa')
+        } else {
+          console.log('⚠️ Función RPC falló, intentando upsert directo...')
+        }
+      } catch (rpcError) {
+        console.log('⚠️ Error en función RPC, intentando upsert directo...', rpcError)
+      }
+
+      // Si la función RPC falló, intentar con upsert directo
+      if (!updateSuccess) {
+        console.log('🔄 Intentando con upsert directo...')
+        const { error: upsertError } = await supabase
+          .from('user_roles')
+          .upsert({
+            user_id: editingUser.id,
+            role: newRole
+          }, {
+            onConflict: 'user_id'
+          })
+
+        if (upsertError) {
+          throw upsertError
+        } else {
+          updateSuccess = true
+          console.log('✅ Upsert directo exitoso')
+        }
+      }
+
+      // Verificar que el rol se actualizó correctamente
+      const { data: updatedRole, error: verifyError } = await supabase
+        .from('user_roles')
+        .select('role')
+        .eq('user_id', editingUser.id)
+        .maybeSingle()
+
+      console.log('📊 Rol después de actualización:', updatedRole?.role || 'user')
+
+      if (verifyError) {
+        console.error('❌ Error verificando rol actualizado:', verifyError)
       }
 
       // Actualizar el estado local
@@ -239,8 +300,27 @@ export default function AuthPage() {
 
     } catch (error: unknown) {
       console.error('❌ Error actualizando rol:', error)
-      const supabaseError = error as SupabaseError
-      setMessage(`Error actualizando rol: ${supabaseError.message || 'Error desconocido'}`)
+      
+      // Mejorar el manejo de errores para mostrar información más útil
+      let errorMessage = 'Error desconocido al actualizar el rol'
+      
+      if (error && typeof error === 'object') {
+        // Si es un error de Supabase
+        if ('message' in error) {
+          errorMessage = (error as ErrorWithMessage).message
+        } else if ('error_description' in error) {
+          errorMessage = (error as ErrorWithDescription).error_description
+        } else if ('details' in error) {
+          errorMessage = (error as ErrorWithDetails).details
+        } else {
+          // Mostrar el objeto completo para debugging
+          errorMessage = `Error: ${JSON.stringify(error, null, 2)}`
+        }
+      } else if (typeof error === 'string') {
+        errorMessage = error
+      }
+      
+      setMessage(`Error actualizando rol: ${errorMessage}`)
       setMessageType('error')
     } finally {
       setUpdatingRole(false)
