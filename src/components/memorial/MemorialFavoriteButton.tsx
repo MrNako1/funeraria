@@ -28,7 +28,7 @@ export default function MemorialFavoriteButton({ memorialId }: MemorialFavoriteB
       error,
       initialized
     })
-  }, [memorialId, user?.id, isFavorite, loading, error, initialized])
+  }, [memorialId, user, isFavorite, loading, error, initialized])
 
   const checkFavoriteStatus = useCallback(async () => {
     if (!user?.id) {
@@ -200,7 +200,7 @@ export default function MemorialFavoriteButton({ memorialId }: MemorialFavoriteB
           {error.includes('políticas RLS') && (
             <div className="mt-1 text-xs">
               <strong>Solución:</strong> Ve a Supabase Dashboard &gt; Authentication &gt; Policies &gt; memorial_favorites
-              y agrega la política "Admins can insert any favorites"
+              y agrega la política &quot;Admins can insert any favorites&quot;
             </div>
           )}
         </div>
