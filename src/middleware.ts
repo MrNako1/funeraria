@@ -46,8 +46,16 @@ export async function middleware(req: NextRequest) {
       .eq('user_id', session.user.id)
       .single()
 
-    if (!roleData || roleData.role !== 'admin') {
-      return NextResponse.redirect(new URL('/', req.url))
+    // Permitir acceso a crear-memorial para admin y cliente
+    if (req.nextUrl.pathname.startsWith('/admin/crear-memorial')) {
+      if (!roleData || (roleData.role !== 'admin' && roleData.role !== 'cliente')) {
+        return NextResponse.redirect(new URL('/', req.url))
+      }
+    } else {
+      // Para otras rutas de admin, solo permitir admin
+      if (!roleData || roleData.role !== 'admin') {
+        return NextResponse.redirect(new URL('/', req.url))
+      }
     }
   }
 

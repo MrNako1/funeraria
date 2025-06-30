@@ -1,6 +1,9 @@
 import { supabase } from '@/lib/supabase'
 import MemorialClient from './MemorialClient'
+import { Memorial } from '@/types/memorial'
 
+// Configurar revalidación para asegurar datos frescos
+export const revalidate = 0
 
 export default async function MemorialPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
@@ -8,8 +11,7 @@ export default async function MemorialPage({ params }: { params: Promise<{ id: s
   const { data: memorial, error } = await supabase
     .from('plantillas')
     .select('*')
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    .eq('id', id as any)
+    .eq('id', id)
     .single()
 
   if (error) {
@@ -20,6 +22,5 @@ export default async function MemorialPage({ params }: { params: Promise<{ id: s
     throw new Error('Memorial no encontrado')
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  return <MemorialClient memorial={memorial as any} />
+  return <MemorialClient memorial={memorial as Memorial} />
 } 

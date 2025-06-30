@@ -1,26 +1,32 @@
 'use client'
 
+import { useState, useEffect } from 'react'
 import Image from 'next/image'
+import { useSearchParams } from 'next/navigation'
 import MemorialQR from '@/components/memorial/MemorialQR'
 import MemorialGallery from '@/components/memorial/MemorialGallery'
 import MemorialComments from '@/components/memorial/MemorialComments'
 import MemorialFavoriteButton from '@/components/memorial/MemorialFavoriteButton'
-
-interface Memorial {
-  id: string
-  primer_nombre: string
-  segundo_nombre: string | null
-  apellido_paterno: string
-  apellido_materno: string | null
-  fecha_nacimiento: string
-  fecha_fallecimiento: string
-  biografia: string
-  comentarios: string | null
-  logros: string | null
-  foto: string | null
-}
+import DeleteMemorialButton from '@/components/memorial/DeleteMemorialButton'
+import EditMemorialButton from '@/components/memorial/EditMemorialButton'
+import { Memorial } from '@/types/memorial'
 
 export default function MemorialClient({ memorial }: { memorial: Memorial }) {
+  const searchParams = useSearchParams()
+  const [showUpdateNotification, setShowUpdateNotification] = useState(false)
+
+  // Mostrar notificación si se regresa de edición
+  useEffect(() => {
+    const updated = searchParams.get('updated')
+    if (updated === 'true') {
+      setShowUpdateNotification(true)
+      // Ocultar la notificación después de 5 segundos
+      setTimeout(() => {
+        setShowUpdateNotification(false)
+      }, 5000)
+    }
+  }, [searchParams])
+
   const getFullName = () => {
     const names = [
       memorial.primer_nombre,
@@ -41,6 +47,35 @@ export default function MemorialClient({ memorial }: { memorial: Memorial }) {
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-slate-50 to-slate-100">
+      {/* Notificación de actualización */}
+      {showUpdateNotification && (
+        <div className="fixed top-4 right-4 z-50 bg-green-500 text-white px-6 py-3 rounded-lg shadow-lg flex items-center space-x-2">
+          <svg
+            className="w-5 h-5"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M5 13l4 4L19 7"
+            />
+          </svg>
+          <span>Memorial actualizado exitosamente</span>
+          <button
+            onClick={() => setShowUpdateNotification(false)}
+            className="ml-2 text-white/80 hover:text-white"
+          >
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+        </div>
+      )}
+
       {/* Cabecera solemne */}
       <div className="relative h-96 bg-gradient-to-b from-slate-800 to-slate-900 overflow-hidden">
         {/* Patrón de fondo sutil */}
@@ -185,6 +220,23 @@ export default function MemorialClient({ memorial }: { memorial: Memorial }) {
               </div>
             </div>
           </div>
+        </div>
+      </div>
+
+      {/* Botón de eliminar memorial al final */}
+      <div className="max-w-6xl mx-auto px-4 py-8">
+        <div className="flex justify-center space-x-4">
+          <EditMemorialButton 
+            memorial={memorial}
+            onUpdate={(updatedMemorial) => {
+              // Los cambios se reflejarán automáticamente con window.location.reload()
+              console.log('Memorial actualizado:', updatedMemorial)
+            }}
+          />
+          <DeleteMemorialButton 
+            memorialId={memorial.id} 
+            memorialName={getFullName()} 
+          />
         </div>
       </div>
     </div>
