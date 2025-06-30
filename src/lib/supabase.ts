@@ -11,16 +11,22 @@ if (!supabaseUrl || !supabaseAnonKey) {
 
 export const supabase = createClient<Database>(supabaseUrl, supabaseAnonKey, {
   auth: {
-    // Deshabilitar persistencia automática
-    persistSession: authConfig.persistSession,
+    // Habilitar persistencia automática
+    persistSession: true,
     
     // Auto refresh de tokens
-    autoRefreshToken: false,
+    autoRefreshToken: true,
     
     // Detectar sesión en el navegador
-    detectSessionInUrl: false,
+    detectSessionInUrl: true,
     
     // Flow de autenticación
-    flowType: 'pkce'
+    flowType: 'pkce',
+    
+    // Configuración de almacenamiento
+    storage: typeof window !== 'undefined' ? window.localStorage : undefined,
+    
+    // Configuración de cookies
+    storageKey: 'supabase.auth.token'
   }
 }) 

@@ -145,24 +145,21 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }
 
   useEffect(() => {
-    // Verificar si hay una sesión persistente no deseada
-    const checkForUnwantedSession = async () => {
+    // Verificar si hay una sesión persistente
+    const checkForSession = async () => {
       try {
+        console.log('🔍 Verificando sesión existente...')
         const { data: { session }, error } = await supabase.auth.getSession()
         
         if (error) {
-          console.error('Error obteniendo sesión:', error)
+          console.error('❌ Error obteniendo sesión:', error)
           setLoading(false)
           return
         }
 
-        // Si hay una sesión, verificar si es la que queremos
+        // Si hay una sesión, configurar el usuario
         if (session?.user) {
-          console.log('🔍 Sesión encontrada:', session.user.email)
-          
-          // Aquí puedes agregar lógica para verificar si la sesión es válida
-          // Por ejemplo, verificar si el usuario existe en tu base de datos
-          
+          console.log('✅ Sesión encontrada:', session.user.email)
           await updateUserWithRole(session.user)
         } else {
           console.log('📭 No hay sesión activa')
@@ -170,7 +167,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           setUserRole(null)
         }
       } catch (error) {
-        console.error('Error verificando sesión:', error)
+        console.error('❌ Error verificando sesión:', error)
         setUser(null)
         setUserRole(null)
       } finally {
@@ -178,15 +175,27 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
     }
 
-    checkForUnwantedSession()
+    checkForSession()
 
     // Escuchar cambios en la autenticación
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
-      console.log('🔄 Cambio de estado de autenticación:', _event)
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+      console.log('🔄 Cambio de estado de autenticación:', event)
       
-      if (session?.user) {
+      if (event === 'SIGNED_IN' && session?.user) {
+        console.log('✅ Usuario inició sesión:', session.user.email)
+        await updateUserWithRole(session.user)
+      } else if (event === 'SIGNED_OUT') {
+        console.log('🚪 Usuario cerró sesión')
+        setUser(null)
+        setUserRole(null)
+      } else if (event === 'TOKEN_REFRESHED' && session?.user) {
+        console.log('🔄 Token renovado para:', session.user.email)
+        await updateUserWithRole(session.user)
+      } else if (session?.user) {
+        console.log('🔄 Otro cambio de estado con usuario:', session.user.email)
         await updateUserWithRole(session.user)
       } else {
+        console.log('🔄 Otro cambio de estado sin usuario')
         setUser(null)
         setUserRole(null)
       }
@@ -199,15 +208,24 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     try {
       console.log('🔐 Iniciando login para:', email)
       
-      const { error } = await supabase.auth.signInWithPassword({ email, password })
+      const { data, error } = await supabase.auth.signInWithPassword({ email, password })
       if (error) throw error
       
-      console.log('✅ Login exitoso')
+      console.log('✅ Login exitoso:', data.user?.email)
       
-      // Redirigir al inicio después del login exitoso
-      setTimeout(() => {
-        router.push('/')
-      }, 100)
+      // Verificar que la sesión se estableció correctamente
+      if (data.session) {
+        console.log('✅ Sesión establecida correctamente')
+        await updateUserWithRole(data.user)
+        
+        // Redirigir al inicio después del login exitoso
+        setTimeout(() => {
+          router.push('/')
+        }, 100)
+      } else {
+        console.error('❌ No se estableció la sesión después del login')
+        throw new Error('Error al establecer la sesión')
+      }
     } catch (error) {
       console.error('❌ Error en login:', error)
       throw error

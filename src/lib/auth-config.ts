@@ -1,13 +1,13 @@
 // Configuración de autenticación
 export const authConfig = {
-  // Deshabilitar login automático
-  disableAutoLogin: true,
+  // Habilitar login automático
+  disableAutoLogin: false,
   
   // Tiempo de expiración de sesión (en segundos)
   sessionExpiry: 24 * 60 * 60, // 24 horas
   
   // Configuración de persistencia
-  persistSession: false,
+  persistSession: true,
   
   // Configuración de cookies
   cookieOptions: {
