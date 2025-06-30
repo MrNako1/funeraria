@@ -99,7 +99,7 @@ export default function MemorialClient({ memorial }: { memorial: Memorial }) {
         </div>
 
         {/* Botón de favoritos en la esquina */}
-        <div className="absolute top-6 right-6">
+        <div className="absolute top-6 right-6 z-20">
           <MemorialFavoriteButton memorialId={memorial.id} />
         </div>
       </div>
