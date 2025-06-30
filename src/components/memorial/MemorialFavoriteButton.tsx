@@ -113,20 +113,26 @@ export default function MemorialFavoriteButton({ memorialId }: MemorialFavoriteB
 
   if (!user) {
     return (
-      <div className="flex items-center space-x-2 px-4 py-2 bg-gray-100 text-gray-500 rounded-lg border border-gray-200">
-        <HeartIcon className="h-5 w-5" />
-        <span>Inicia sesión para agregar a favoritos</span>
-      </div>
+      <button
+        disabled
+        className="p-2 bg-white/20 backdrop-blur-sm rounded-full border border-white/30 text-white/60 hover:bg-white/30 transition-all duration-200 cursor-not-allowed"
+        title="Inicia sesión para agregar a favoritos"
+      >
+        <HeartIcon className="h-6 w-6" />
+      </button>
     )
   }
 
   // Mostrar loading mientras se inicializa
   if (!initialized) {
     return (
-      <div className="flex items-center space-x-2 px-4 py-2 bg-gray-100 text-gray-500 rounded-lg border border-gray-200">
-        <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-gray-600"></div>
-        <span>Verificando favoritos...</span>
-      </div>
+      <button
+        disabled
+        className="p-2 bg-white/20 backdrop-blur-sm rounded-full border border-white/30 text-white/60 transition-all duration-200 cursor-not-allowed"
+        title="Verificando favoritos..."
+      >
+        <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-white"></div>
+      </button>
     )
   }
 
@@ -134,15 +140,18 @@ export default function MemorialFavoriteButton({ memorialId }: MemorialFavoriteB
     <button
       onClick={toggleFavorite}
       disabled={loading}
-      className="flex items-center space-x-2 px-4 py-2 bg-white text-gray-700 rounded-lg hover:bg-gray-50 transition-colors disabled:opacity-50 border border-gray-200"
+      className={`p-2 rounded-full border transition-all duration-200 hover:scale-110 ${
+        isFavorite 
+          ? 'bg-red-500 border-red-500 text-white shadow-lg hover:bg-red-600' 
+          : 'bg-white/20 backdrop-blur-sm border-white/30 text-white hover:bg-white/30'
+      } ${loading ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
+      title={isFavorite ? 'Quitar de favoritos' : 'Agregar a favoritos'}
     >
       {isFavorite ? (
-        <HeartIconSolid className="h-5 w-5 text-red-500" />
+        <HeartIconSolid className="h-6 w-6" />
       ) : (
-        <HeartIcon className="h-5 w-5" />
+        <HeartIcon className="h-6 w-6" />
       )}
-      <span>{isFavorite ? 'Quitar de favoritos' : 'Agregar a favoritos'}</span>
-      {loading && <span className="text-sm text-gray-500">...</span>}
     </button>
   )
 } 
