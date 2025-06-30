@@ -54,9 +54,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           try {
             // Usar una función RPC para insertar el rol por defecto
             const { error: insertError } = await supabase
-              .rpc('assign_user_role', {
-                user_uuid: userId,
-                user_role: 'user'
+              .rpc('update_user_role', {
+                target_user_id: userId,
+                new_role: 'user'
               })
             
             if (insertError) {

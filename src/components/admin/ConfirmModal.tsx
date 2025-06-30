@@ -66,6 +66,25 @@ export default function ConfirmModal({
     }
   }, [isOpen, autoFocus, isLoading])
 
+  const handleCancel = useCallback(() => {
+    if (!isLoading) {
+      onCancel()
+    }
+  }, [onCancel, isLoading])
+
+  const handleConfirm = useCallback(async () => {
+    if (isLoading) return
+
+    try {
+      setInternalLoading(true)
+      await onConfirm()
+    } catch (error) {
+      console.error('Error en confirmación:', error)
+    } finally {
+      setInternalLoading(false)
+    }
+  }, [onConfirm, isLoading])
+
   // Manejar eventos de teclado
   useEffect(() => {
     const handleEscape = (e: KeyboardEvent) => {
@@ -91,33 +110,14 @@ export default function ConfirmModal({
       document.removeEventListener('keydown', handleEnter)
       document.body.style.overflow = 'unset'
     }
-  }, [isOpen, isLoading])
+  }, [isOpen, isLoading, handleCancel, handleConfirm])
 
   // Click fuera del modal
   const handleOverlayClick = useCallback((e: React.MouseEvent) => {
     if (closeOnOverlayClick && e.target === e.currentTarget && !isLoading) {
       handleCancel()
     }
-  }, [closeOnOverlayClick, isLoading])
-
-  const handleCancel = useCallback(() => {
-    if (!isLoading) {
-      onCancel()
-    }
-  }, [onCancel, isLoading])
-
-  const handleConfirm = useCallback(async () => {
-    if (isLoading) return
-
-    try {
-      setInternalLoading(true)
-      await onConfirm()
-    } catch (error) {
-      console.error('Error en confirmación:', error)
-    } finally {
-      setInternalLoading(false)
-    }
-  }, [onConfirm, isLoading])
+  }, [closeOnOverlayClick, isLoading, handleCancel])
 
   const getButtonStyles = useCallback(() => {
     const baseStyles = 'w-full inline-flex justify-center items-center rounded-md border border-transparent shadow-sm px-4 py-2 text-base font-medium text-white focus:outline-none focus:ring-2 focus:ring-offset-2 sm:ml-3 sm:w-auto sm:text-sm transition-all duration-200 transform hover:scale-105 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none'

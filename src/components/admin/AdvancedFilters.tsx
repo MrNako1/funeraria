@@ -106,7 +106,7 @@ export default function AdvancedFilters({
   const [isExpanded, setIsExpanded] = useState(false)
   const [isAnimating, setIsAnimating] = useState(false)
   const [localFilters, setLocalFilters] = useState<FilterOptions>(filters)
-  const animationTimeoutRef = useRef<NodeJS.Timeout>()
+  const animationTimeoutRef = useRef<NodeJS.Timeout | undefined>(undefined)
 
   // Sincronizar filtros locales con props
   useEffect(() => {
@@ -130,7 +130,7 @@ export default function AdvancedFilters({
   }, [localFilters, onFiltersChange])
 
   const handleSortChange = useCallback((sortBy: string) => {
-    const newSortOrder = localFilters.sortBy === sortBy && localFilters.sortOrder === 'asc' ? 'desc' : 'asc'
+    const newSortOrder: 'asc' | 'desc' = localFilters.sortBy === sortBy && localFilters.sortOrder === 'asc' ? 'desc' : 'asc'
     const newFilters = {
       ...localFilters,
       sortBy,

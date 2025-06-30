@@ -1,6 +1,6 @@
 'use client'
 
-import { useMemo, useState, useEffect, useRef, useCallback } from 'react'
+import { useState, useEffect, useMemo, useRef } from 'react'
 import { User } from '@supabase/supabase-js'
 
 interface UserWithRole extends User {
@@ -85,7 +85,6 @@ function StatCard({
     if (!showChange || previousValue === undefined || previousValue === value) return null
     
     const change = value - previousValue
-    const changePercent = previousValue > 0 ? Math.round((change / previousValue) * 100) : 0
     
     return (
       <div className={`absolute -top-1 -right-1 px-1.5 py-0.5 rounded-full text-xs font-medium ${

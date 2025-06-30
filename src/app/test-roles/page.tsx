@@ -51,9 +51,9 @@ export default function TestRolesPage() {
 
       // Test 3: Verificar función RPC
       const { error: rpcError } = await supabase
-        .rpc('assign_user_role', {
-          user_uuid: '00000000-0000-0000-0000-000000000000',
-          user_role: 'test'
+        .rpc('update_user_role', {
+          target_user_id: '00000000-0000-0000-0000-000000000000',
+          new_role: 'test'
         });
 
       if (rpcError) {
@@ -112,9 +112,9 @@ export default function TestRolesPage() {
       addResult('Cambio de rol', 'success', `Intentando cambiar ${testUser.user_id} de ${testUser.role} a ${newRole}`);
 
       const { error } = await supabase
-        .rpc('assign_user_role', {
-          user_uuid: testUser.user_id,
-          user_role: newRole
+        .rpc('update_user_role', {
+          target_user_id: testUser.user_id,
+          new_role: newRole
         });
 
       if (error) {

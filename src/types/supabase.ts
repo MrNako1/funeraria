@@ -211,10 +211,6 @@ export type Database = {
         Args: { user_email: string }
         Returns: undefined
       }
-      assign_user_role: {
-        Args: { user_uuid: string; user_role: string }
-        Returns: undefined
-      }
       delete_user_account: {
         Args: { target_user_id: string }
         Returns: boolean

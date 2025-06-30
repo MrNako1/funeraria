@@ -10,7 +10,6 @@ interface UserWithRole extends User {
 interface DataExportProps {
   users: UserWithRole[]
   filteredUsers: UserWithRole[]
-  onExport: (data: UserWithRole[], format: string) => void
   isLoading?: boolean
 }
 
@@ -21,10 +20,18 @@ interface ExportField {
   included: boolean
 }
 
+interface ExportUser {
+  id?: string
+  email?: string
+  name?: string
+  role?: string
+  status?: string
+  created_at?: string
+}
+
 export default function DataExport({ 
   users, 
   filteredUsers, 
-  onExport, 
   isLoading = false 
 }: DataExportProps) {
   const [isOpen, setIsOpen] = useState(false)
@@ -81,7 +88,7 @@ export default function DataExport({
     const includedFields = exportFields.filter(field => field.included)
     
     return dataToExport.map(user => {
-      const exportUser: any = {}
+      const exportUser: ExportUser = {}
       
       includedFields.forEach(field => {
         switch (field.key) {
@@ -126,6 +133,37 @@ export default function DataExport({
   // Preview de datos
   const previewData = useMemo(() => {
     return exportData.slice(0, 3) // Solo los primeros 3 registros para preview
+  }, [exportData])
+
+  const downloadCSV = useCallback(async () => {
+    const headers = Object.keys(exportData[0])
+    const csvContent = [
+      headers.join(','),
+      ...exportData.map(row => headers.map(header => `"${(row as Record<string, string>)[header]}"`).join(','))
+    ].join('\n')
+
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' })
+    const url = URL.createObjectURL(blob)
+    const link = document.createElement('a')
+    link.href = url
+    link.download = `usuarios_${new Date().toISOString().split('T')[0]}.csv`
+    document.body.appendChild(link)
+    link.click()
+    document.body.removeChild(link)
+    URL.revokeObjectURL(url)
+  }, [exportData])
+
+  const downloadJSON = useCallback(async () => {
+    const jsonContent = JSON.stringify(exportData, null, 2)
+    const blob = new Blob([jsonContent], { type: 'application/json' })
+    const url = URL.createObjectURL(blob)
+    const link = document.createElement('a')
+    link.href = url
+    link.download = `usuarios_${new Date().toISOString().split('T')[0]}.json`
+    document.body.appendChild(link)
+    link.click()
+    document.body.removeChild(link)
+    URL.revokeObjectURL(url)
   }, [exportData])
 
   const handleExport = useCallback(async () => {
@@ -174,38 +212,7 @@ export default function DataExport({
       setIsExporting(false)
       setExportProgress(0)
     }
-  }, [exportData, exportFormat])
-
-  const downloadCSV = useCallback(async () => {
-    const headers = Object.keys(exportData[0])
-    const csvContent = [
-      headers.join(','),
-      ...exportData.map(row => headers.map(header => `"${row[header]}"`).join(','))
-    ].join('\n')
-
-    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' })
-    const url = URL.createObjectURL(blob)
-    const link = document.createElement('a')
-    link.href = url
-    link.download = `usuarios_${new Date().toISOString().split('T')[0]}.csv`
-    document.body.appendChild(link)
-    link.click()
-    document.body.removeChild(link)
-    URL.revokeObjectURL(url)
-  }, [exportData])
-
-  const downloadJSON = useCallback(async () => {
-    const jsonContent = JSON.stringify(exportData, null, 2)
-    const blob = new Blob([jsonContent], { type: 'application/json' })
-    const url = URL.createObjectURL(blob)
-    const link = document.createElement('a')
-    link.href = url
-    link.download = `usuarios_${new Date().toISOString().split('T')[0]}.json`
-    document.body.appendChild(link)
-    link.click()
-    document.body.removeChild(link)
-    URL.revokeObjectURL(url)
-  }, [exportData])
+  }, [exportData, exportFormat, downloadCSV, downloadJSON])
 
   const toggleField = useCallback((fieldKey: string) => {
     setExportFields(prev => prev.map(field => 
@@ -226,18 +233,7 @@ export default function DataExport({
       case 'json':
         return '📄'
       default:
-        return '📁'
-    }
-  }, [])
-
-  const getScopeIcon = useCallback((scope: string) => {
-    switch (scope) {
-      case 'filtered':
-        return '🔍'
-      case 'all':
-        return '📋'
-      default:
-        return '📁'
+        return '��'
     }
   }, [])
 

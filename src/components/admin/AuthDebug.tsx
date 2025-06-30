@@ -1,7 +1,7 @@
 'use client'
 
 import { useAuth } from '@/lib/auth-context'
-import { useEffect, useState, useCallback, useMemo } from 'react'
+import { useEffect, useState, useCallback } from 'react'
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs'
 import { Session } from '@supabase/supabase-js'
 
@@ -9,14 +9,6 @@ interface SessionInfo {
   session: Session | null
   error: Error | null
   lastChecked: Date
-}
-
-interface DebugInfo {
-  user: any
-  userRole: string | null
-  loading: boolean
-  sessionInfo: SessionInfo | null
-  isVisible: boolean
 }
 
 export default function AuthDebug() {
@@ -68,14 +60,6 @@ export default function AuthDebug() {
     document.addEventListener('keydown', handleKeyDown)
     return () => document.removeEventListener('keydown', handleKeyDown)
   }, [])
-
-  const debugInfo: DebugInfo = useMemo(() => ({
-    user,
-    userRole,
-    loading,
-    sessionInfo,
-    isVisible
-  }), [user, userRole, loading, sessionInfo, isVisible])
 
   const getStatusColor = (condition: boolean) => {
     return condition ? 'text-green-400' : 'text-red-400'

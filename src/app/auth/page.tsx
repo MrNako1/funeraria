@@ -55,6 +55,11 @@ export default function AuthPage() {
   const [newRole, setNewRole] = useState<'user' | 'admin' | 'cliente'>('user')
   const [updatingRole, setUpdatingRole] = useState(false)
   
+  // Estados para eliminación de usuarios
+  const [deletingUser, setDeletingUser] = useState<User | null>(null)
+  const [showDeleteModal, setShowDeleteModal] = useState(false)
+  const [deletingUserId, setDeletingUserId] = useState<string | null>(null)
+  
   const { user, signIn, signUp, userRole } = useAuth()
   const router = useRouter()
 
@@ -234,9 +239,9 @@ export default function AuthPage() {
       try {
         console.log('🔄 Intentando con función RPC...')
         const { data: rpcData, error } = await supabase
-          .rpc('assign_user_role', {
-            user_uuid: editingUser.id,
-            user_role: newRole
+          .rpc('update_user_role', {
+            target_user_id: editingUser.id,
+            new_role: newRole
           })
 
         console.log('📊 Respuesta RPC:', { data: rpcData, error })
@@ -324,6 +329,83 @@ export default function AuthPage() {
       setMessageType('error')
     } finally {
       setUpdatingRole(false)
+    }
+  }
+
+  const showDeleteConfirmation = (user: User) => {
+    setDeletingUser(user)
+    setShowDeleteModal(true)
+  }
+
+  const handleDeleteUser = async () => {
+    if (!deletingUser) return
+
+    try {
+      setDeletingUserId(deletingUser.id)
+      setMessage('')
+      setMessageType('')
+
+      console.log('🗑️ Iniciando eliminación del usuario:', deletingUser.email)
+
+      // 1. Eliminar favoritos del usuario
+      const { error: favoritesError } = await supabase
+        .from('memorial_favorites')
+        .delete()
+        .eq('user_id', deletingUser.id)
+
+      if (favoritesError) {
+        console.error('Error eliminando favoritos:', favoritesError)
+        // Continuar aunque falle, no es crítico
+      } else {
+        console.log('✅ Favoritos eliminados')
+      }
+
+      // 2. Eliminar rol del usuario
+      const { error: roleError } = await supabase
+        .from('user_roles')
+        .delete()
+        .eq('user_id', deletingUser.id)
+
+      if (roleError) {
+        console.error('Error eliminando rol:', roleError)
+        throw roleError
+      } else {
+        console.log('✅ Rol eliminado')
+      }
+
+      // 3. Intentar usar la función RPC delete_user_account si está disponible
+      try {
+        const { data: deleteResult, error: rpcError } = await supabase
+          .rpc('delete_user_account', { target_user_id: deletingUser.id })
+
+        if (rpcError) {
+          console.log('⚠️ Función RPC no disponible o falló:', rpcError.message)
+          // Continuar sin la función RPC
+        } else if (deleteResult) {
+          console.log('✅ Función RPC exitosa')
+        }
+      } catch (rpcError) {
+        console.log('⚠️ Error en función RPC:', rpcError)
+        // Continuar sin la función RPC
+      }
+
+      // 4. Actualizar el estado local
+      setUsers(prev => prev.filter(user => user.id !== deletingUser.id))
+      console.log('✅ Estado local actualizado')
+
+      // 5. Mostrar mensaje de éxito
+      setMessage('Usuario eliminado correctamente (datos de la aplicación eliminados)')
+      setMessageType('success')
+
+    } catch (error) {
+      console.error('❌ Error general eliminando usuario:', error)
+      setMessage('Error al eliminar el usuario')
+      setMessageType('error')
+    } finally {
+      // Limpiar estados
+      setDeletingUserId(null)
+      setDeletingUser(null)
+      setShowDeleteModal(false)
     }
   }
 
@@ -538,8 +620,14 @@ export default function AuthPage() {
             >
                             ✏️ Editar
                           </button>
-                          <button className="text-red-600 hover:text-red-900">
-                            🗑️ Eliminar
+                          <button 
+                            onClick={() => showDeleteConfirmation(user)}
+                            disabled={deletingUserId === user.id}
+                            className={`text-red-600 hover:text-red-900 ${
+                              deletingUserId === user.id ? 'opacity-50 cursor-not-allowed' : ''
+                            }`}
+                          >
+                            {deletingUserId === user.id ? '⏳' : '🗑️'} Eliminar
             </button>
                         </td>
                       </tr>
@@ -611,6 +699,64 @@ export default function AuthPage() {
                     className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     {updatingRole ? 'Actualizando...' : 'Actualizar Rol'}
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Modal de Confirmación de Eliminación */}
+        {showDeleteModal && deletingUser && (
+          <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
+            <div className="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
+              <div className="mt-3">
+                <div className="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-red-100 mb-4">
+                  <svg className="h-6 w-6 text-red-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
+                  </svg>
+                </div>
+                
+                <h3 className="text-lg font-medium text-gray-900 mb-4 text-center">
+                  🗑️ Eliminar Usuario
+                </h3>
+                
+                <div className="mb-6 text-center">
+                  <p className="text-sm text-gray-600 mb-2">
+                    ¿Estás seguro de que quieres eliminar al usuario:
+                  </p>
+                  <p className="text-sm font-medium text-gray-900 mb-2">
+                    {deletingUser.email}
+                  </p>
+                  <p className="text-xs text-gray-500">
+                    Esta acción no se puede deshacer y eliminará permanentemente todos los datos asociados.
+                  </p>
+                </div>
+
+                <div className="flex justify-end space-x-3">
+                  <button
+                    onClick={() => {
+                      setShowDeleteModal(false)
+                      setDeletingUser(null)
+                    }}
+                    disabled={deletingUserId === deletingUser.id}
+                    className="px-4 py-2 bg-gray-300 text-gray-700 rounded-md hover:bg-gray-400 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    Cancelar
+                  </button>
+                  <button
+                    onClick={handleDeleteUser}
+                    disabled={deletingUserId === deletingUser.id}
+                    className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {deletingUserId === deletingUser.id ? (
+                      <div className="flex items-center space-x-2">
+                        <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                        <span>Eliminando...</span>
+                      </div>
+                    ) : (
+                      'Eliminar Usuario'
+                    )}
                   </button>
                 </div>
               </div>

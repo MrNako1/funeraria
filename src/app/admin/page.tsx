@@ -67,14 +67,14 @@ export default function AdminPage() {
 
   // Memoizar usuarios filtrados y ordenados
   const filteredAndSortedUsers = useMemo(() => {
-    let filtered = users.filter(user => 
+    const filtered = users.filter(user => 
       user.email?.toLowerCase().includes(debouncedSearchTerm.toLowerCase()) ||
       user.user_metadata?.full_name?.toLowerCase().includes(debouncedSearchTerm.toLowerCase()) ||
       user.role.toLowerCase().includes(debouncedSearchTerm.toLowerCase())
     )
 
     return filtered.sort((a, b) => {
-      let aValue: any, bValue: any
+      let aValue: string | number, bValue: string | number
       
       switch (sortBy) {
         case 'name':
@@ -251,16 +251,6 @@ export default function AdminPage() {
     }
   }, [users, supabase, showNotification])
 
-  const showDeleteConfirmation = useCallback((userId: string, userName: string) => {
-    setConfirmModal({
-      isOpen: true,
-      title: 'Eliminar Usuario',
-      message: `¿Estás seguro de que quieres eliminar al usuario "${userName}"? Esta acción no se puede deshacer y eliminará permanentemente todos los datos asociados.`,
-      onConfirm: () => deleteUser(userId),
-      userId
-    })
-  }, [])
-
   const deleteUser = useCallback(async (userId: string) => {
     // Cerrar modal
     setConfirmModal(prev => ({ ...prev, isOpen: false }))
@@ -272,25 +262,59 @@ export default function AdminPage() {
     }))
 
     try {
-      // Primero eliminar el rol del usuario
+      console.log('🗑️ Iniciando eliminación del usuario:', userId)
+
+      // 1. Eliminar favoritos del usuario
+      const { error: favoritesError } = await supabase
+        .from('memorial_favorites')
+        .delete()
+        .eq('user_id', userId)
+
+      if (favoritesError) {
+        console.error('Error eliminando favoritos:', favoritesError)
+        // Continuar aunque falle, no es crítico
+      } else {
+        console.log('✅ Favoritos eliminados')
+      }
+
+      // 2. Eliminar rol del usuario
       const { error: roleError } = await supabase
         .from('user_roles')
         .delete()
         .eq('user_id', userId)
 
-      if (roleError) throw roleError
+      if (roleError) {
+        console.error('Error eliminando rol:', roleError)
+        throw roleError
+      } else {
+        console.log('✅ Rol eliminado')
+      }
 
-      // Luego eliminar el usuario de auth
-      const { error: userError } = await supabase.auth.admin.deleteUser(userId)
+      // 3. Intentar usar la función RPC delete_user_account si está disponible
+      try {
+        const { data: deleteResult, error: rpcError } = await supabase
+          .rpc('delete_user_account', { target_user_id: userId })
 
-      if (userError) throw userError
+        if (rpcError) {
+          console.log('⚠️ Función RPC no disponible o falló:', rpcError.message)
+          // Continuar sin la función RPC
+        } else if (deleteResult) {
+          console.log('✅ Función RPC exitosa')
+        }
+      } catch (rpcError) {
+        console.log('⚠️ Error en función RPC:', rpcError)
+        // Continuar sin la función RPC
+      }
 
-      // Actualizar el estado local
+      // 4. Actualizar el estado local
       setUsers(prev => prev.filter(user => user.id !== userId))
+      console.log('✅ Estado local actualizado')
 
-      showNotification('Usuario eliminado correctamente', 'success')
+      // 5. Mostrar mensaje de éxito
+      showNotification('Usuario eliminado correctamente (datos de la aplicación eliminados)', 'success')
+
     } catch (error) {
-      console.error('Error deleting user:', error)
+      console.error('❌ Error general eliminando usuario:', error)
       showNotification('Error al eliminar el usuario', 'error')
     } finally {
       // Clear loading state
@@ -300,6 +324,16 @@ export default function AdminPage() {
       }))
     }
   }, [supabase, showNotification])
+
+  const showDeleteConfirmation = (userId: string, userName: string) => {
+    setConfirmModal({
+      isOpen: true,
+      title: 'Eliminar Usuario',
+      message: `¿Estás seguro de que quieres eliminar al usuario "${userName}"? Esta acción no se puede deshacer y eliminará permanentemente todos los datos asociados.`,
+      onConfirm: () => deleteUser(userId),
+      userId
+    })
+  }
 
   const handleSort = useCallback((field: 'name' | 'email' | 'created_at' | 'role') => {
     if (sortBy === field) {

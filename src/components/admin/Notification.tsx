@@ -1,7 +1,6 @@
 'use client'
 
 import { useState, useEffect, useCallback, useRef } from 'react'
-import { XMarkIcon } from '@heroicons/react/24/outline'
 
 interface NotificationProps {
   message: string
@@ -29,7 +28,12 @@ export default function Notification({
   const [progress, setProgress] = useState(100)
   const [isPaused, setIsPaused] = useState(false)
   const progressRef = useRef<HTMLDivElement>(null)
-  const timeoutRef = useRef<NodeJS.Timeout>()
+  const timeoutRef = useRef<NodeJS.Timeout | undefined>(undefined)
+
+  const handleClose = useCallback(() => {
+    setIsVisible(false)
+    setTimeout(onClose, 300) // Esperar a que termine la animación
+  }, [onClose])
 
   const startTimer = useCallback(() => {
     if (persistent || !showProgress) return
@@ -54,12 +58,7 @@ export default function Notification({
     }
 
     updateProgress()
-  }, [duration, isPaused, persistent, showProgress])
-
-  const handleClose = useCallback(() => {
-    setIsVisible(false)
-    setTimeout(onClose, 300) // Esperar a que termine la animación
-  }, [onClose])
+  }, [duration, isPaused, persistent, showProgress, handleClose])
 
   const handlePause = useCallback(() => {
     if (persistent) return
@@ -189,7 +188,7 @@ export default function Notification({
               onClick={handleClose}
             >
               <span className="sr-only">Cerrar</span>
-              <XMarkIcon className="h-5 w-5" />
+              <span className="h-5 w-5">✕</span>
             </button>
           </div>
         </div>
@@ -204,4 +203,4 @@ export default function Notification({
       </div>
     </div>
   )
-} 
+}
