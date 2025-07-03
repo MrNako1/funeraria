@@ -19,13 +19,16 @@ export const supabase = createClient<Database>(supabaseUrl, supabaseAnonKey, {
     // Detectar sesión en el navegador
     detectSessionInUrl: true,
     
-    // Flow de autenticación
+    // Flow de autenticación más seguro
     flowType: 'pkce',
     
-    // Configuración de almacenamiento
+    // Configuración de almacenamiento mejorada
     storage: typeof window !== 'undefined' ? window.localStorage : undefined,
     
-    // Configuración de cookies
-    storageKey: 'supabase.auth.token'
+    // Clave de almacenamiento específica
+    storageKey: 'supabase.auth.token',
+    
+    // Configuración adicional para mejor persistencia
+    debug: process.env.NODE_ENV === 'development'
   }
 }) 

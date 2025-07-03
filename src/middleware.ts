@@ -16,12 +16,14 @@ export async function middleware(req: NextRequest) {
             name,
             value,
             ...options,
-            // Configuración de seguridad para cookies
-            httpOnly: true, // Mejorar seguridad - solo acceso desde servidor
+            // Configuración mejorada para persistencia de sesión
+            httpOnly: false, // Permitir acceso desde JavaScript para mejor persistencia
             secure: process.env.NODE_ENV === 'production',
             sameSite: 'lax',
             path: '/',
             maxAge: 24 * 60 * 60, // 24 horas
+            // Configuración específica para desarrollo
+            domain: process.env.NODE_ENV === 'development' ? 'localhost' : undefined,
           })
         },
         remove: (name, options) => {
@@ -29,13 +31,14 @@ export async function middleware(req: NextRequest) {
             name,
             value: '',
             ...options,
-            // Configuración de seguridad para eliminar cookies
-            httpOnly: true, // Mejorar seguridad - solo acceso desde servidor
+            // Configuración para eliminar cookies correctamente
+            httpOnly: false,
             secure: process.env.NODE_ENV === 'production',
             sameSite: 'lax',
             path: '/',
             maxAge: 0,
             expires: new Date(0),
+            domain: process.env.NODE_ENV === 'development' ? 'localhost' : undefined,
           })
         },
       },

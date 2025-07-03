@@ -28,6 +28,12 @@ export default function AuthDebug() {
         lastChecked: new Date() 
       })
       setLastRefresh(new Date())
+      
+      // Verificar localStorage también
+      if (typeof window !== 'undefined') {
+        const localStorageToken = localStorage.getItem('supabase.auth.token')
+        console.log('🔍 localStorage token:', localStorageToken ? 'Presente' : 'Ausente')
+      }
     } catch (error) {
       console.error('Error checking session:', error)
       setSessionInfo({ 
@@ -147,6 +153,18 @@ export default function AuthDebug() {
             <span>Session:</span>
             <span className={getStatusColor(!!sessionInfo?.session)}>
               {getStatusText(!!sessionInfo?.session)}
+            </span>
+          </div>
+          <div className="flex items-center justify-between">
+            <span>localStorage:</span>
+            <span className={getStatusColor(typeof window !== 'undefined' && !!localStorage.getItem('supabase.auth.token'))}>
+              {getStatusText(typeof window !== 'undefined' && !!localStorage.getItem('supabase.auth.token'))}
+            </span>
+          </div>
+          <div className="flex items-center justify-between">
+            <span>Cookies:</span>
+            <span className={getStatusColor(typeof window !== 'undefined' && document.cookie.includes('supabase'))}>
+              {getStatusText(typeof window !== 'undefined' && document.cookie.includes('supabase'))}
             </span>
           </div>
         </div>

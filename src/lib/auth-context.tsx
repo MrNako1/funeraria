@@ -144,6 +144,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const checkForSession = async () => {
       try {
         console.log('🔍 Verificando sesión existente...')
+        
+        // Verificar si estamos en el navegador
+        if (typeof window === 'undefined') {
+          console.log('⚠️ No estamos en el navegador, saltando verificación de sesión')
+          setLoading(false)
+          return
+        }
+        
         const { data: { session }, error } = await supabase.auth.getSession()
         
         if (error) {
@@ -155,6 +163,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         // Si hay una sesión, configurar el usuario
         if (session?.user) {
           console.log('✅ Sesión encontrada:', session.user.email)
+          console.log('📅 Sesión expira en:', new Date(session.expires_at! * 1000).toLocaleString())
           await updateUserWithRole(session.user)
         } else {
           console.log('📭 No hay sesión activa')
@@ -170,6 +179,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
     }
 
+    // Verificar sesión inmediatamente
     checkForSession()
 
     // Escuchar cambios en la autenticación
@@ -185,6 +195,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         setUserRole(null)
       } else if (event === 'TOKEN_REFRESHED' && session?.user) {
         console.log('🔄 Token renovado para:', session.user.email)
+        await updateUserWithRole(session.user)
+      } else if (event === 'INITIAL_SESSION' && session?.user) {
+        console.log('🔄 Sesión inicial detectada:', session.user.email)
         await updateUserWithRole(session.user)
       } else if (session?.user) {
         console.log('🔄 Otro cambio de estado con usuario:', session.user.email)
@@ -211,7 +224,20 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       // Verificar que la sesión se estableció correctamente
       if (data.session) {
         console.log('✅ Sesión establecida correctamente')
+        console.log('📅 Sesión expira en:', new Date(data.session.expires_at! * 1000).toLocaleString())
+        
+        // Actualizar el usuario con su rol
         await updateUserWithRole(data.user)
+        
+        // Verificar que la sesión persiste en localStorage
+        if (typeof window !== 'undefined') {
+          const storedSession = localStorage.getItem('supabase.auth.token')
+          if (storedSession) {
+            console.log('✅ Sesión guardada en localStorage')
+          } else {
+            console.warn('⚠️ Sesión no encontrada en localStorage')
+          }
+        }
         
         // Redirigir al inicio después del login exitoso
         setTimeout(() => {
