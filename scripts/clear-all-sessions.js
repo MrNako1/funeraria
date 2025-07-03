@@ -1,78 +1,109 @@
 const { createClient } = require('@supabase/supabase-js')
+require('dotenv').config({ path: '.env.local' })
 
 // Configuración de Supabase
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
-const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY
+const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
 
-if (!supabaseUrl || !supabaseServiceKey) {
-  console.error('Error: Faltan las variables de entorno de Supabase')
-  console.log('Asegúrate de tener configuradas:')
-  console.log('- NEXT_PUBLIC_SUPABASE_URL')
-  console.log('- SUPABASE_SERVICE_ROLE_KEY')
+if (!supabaseUrl || !supabaseAnonKey) {
+  console.error('❌ Faltan las variables de entorno de Supabase')
+  console.log('📝 Crea un archivo .env.local con NEXT_PUBLIC_SUPABASE_URL y NEXT_PUBLIC_SUPABASE_ANON_KEY')
   process.exit(1)
 }
 
-const supabase = createClient(supabaseUrl, supabaseServiceKey)
+const supabase = createClient(supabaseUrl, supabaseAnonKey, {
+  auth: {
+    persistSession: true,
+    autoRefreshToken: true,
+    detectSessionInUrl: true,
+    flowType: 'pkce',
+    storageKey: 'supabase.auth.token'
+  }
+})
 
 async function clearAllSessions() {
+  console.log('🧹 Limpiando todas las sesiones...')
+  console.log('=====================================')
+  
   try {
-    console.log('🧹 Limpiando todas las sesiones de Supabase...')
+    // Verificar sesión actual antes de limpiar
+    console.log('\n📊 Verificando sesión actual...')
+    const { data: { session }, error } = await supabase.auth.getSession()
     
-    // Obtener todos los usuarios
-    const { data: users, error: usersError } = await supabase.auth.admin.listUsers()
-    
-    if (usersError) {
-      throw usersError
+    if (error) {
+      console.error('❌ Error obteniendo sesión:', error)
+    } else if (session) {
+      console.log('✅ Sesión activa encontrada:', session.user.email)
+      console.log('📅 Expira en:', new Date(session.expires_at * 1000).toLocaleString())
+    } else {
+      console.log('📭 No hay sesión activa')
     }
     
-    console.log(`Encontrados ${users.users.length} usuarios`)
+    // Cerrar sesión en Supabase
+    console.log('\n🔄 Cerrando sesión en Supabase...')
+    const { error: signOutError } = await supabase.auth.signOut()
     
-    // Limpiar sesiones de cada usuario
-    for (const user of users.users) {
-      try {
-        console.log(`Limpiando sesiones de: ${user.email}`)
-        
-        // Revocar todas las sesiones del usuario
-        const { error: revokeError } = await supabase.auth.admin.deleteUser(user.id)
-        
-        if (revokeError) {
-          console.error(`Error revocando sesiones de ${user.email}:`, revokeError)
-        } else {
-          console.log(`✅ Sesiones limpiadas para: ${user.email}`)
-        }
-      } catch (userError) {
-        console.error(`Error procesando usuario ${user.email}:`, userError)
-      }
+    if (signOutError) {
+      console.error('❌ Error cerrando sesión:', signOutError)
+    } else {
+      console.log('✅ Sesión cerrada en Supabase')
     }
     
-    console.log('✅ Proceso de limpieza completado')
+    // Verificar que la sesión se cerró
+    console.log('\n🔍 Verificando que la sesión se cerró...')
+    const { data: { session: sessionAfter }, error: sessionError } = await supabase.auth.getSession()
+    
+    if (sessionError) {
+      console.error('❌ Error verificando sesión después del cierre:', sessionError)
+    } else if (sessionAfter) {
+      console.log('⚠️  La sesión aún está activa después del cierre')
+    } else {
+      console.log('✅ Sesión cerrada correctamente')
+    }
+    
+    console.log('\n✅ Limpieza completada')
+    console.log('\n💡 Para limpiar completamente en el navegador:')
+    console.log('1. Abre las herramientas de desarrollador (F12)')
+    console.log('2. Ve a Application/Storage')
+    console.log('3. Limpia Local Storage y Session Storage')
+    console.log('4. Elimina las cookies del dominio')
+    console.log('5. Recarga la página')
     
   } catch (error) {
-    console.error('❌ Error general:', error)
+    console.error('❌ Error en la limpieza:', error)
   }
 }
 
-// Función alternativa para limpiar solo sesiones activas
+// Función para limpiar solo sesiones activas
 async function clearActiveSessions() {
+  console.log('🧹 Limpiando solo sesiones activas...')
+  console.log('=====================================')
+  
   try {
-    console.log('🧹 Limpiando sesiones activas...')
+    const { data: { session }, error } = await supabase.auth.getSession()
     
-    // Esta es una operación más segura que solo limpia sesiones activas
-    // sin eliminar usuarios
+    if (error) {
+      console.error('❌ Error obteniendo sesión:', error)
+      return
+    }
     
-    console.log('⚠️ Para limpiar sesiones activas, usa el botón en la página web')
-    console.log('O ejecuta en el navegador:')
-    console.log('localStorage.clear(); sessionStorage.clear();')
+    if (session) {
+      console.log('✅ Sesión activa encontrada:', session.user.email)
+      await clearAllSessions()
+    } else {
+      console.log('📭 No hay sesiones activas para limpiar')
+    }
     
   } catch (error) {
-    console.error('❌ Error:', error)
+    console.error('❌ Error limpiando sesiones activas:', error)
   }
 }
 
-// Ejecutar la función apropiada
-const action = process.argv[2]
+// Obtener argumento de línea de comandos
+const args = process.argv.slice(2)
+const mode = args[0] || 'all'
 
-if (action === 'active') {
+if (mode === 'active') {
   clearActiveSessions()
 } else {
   clearAllSessions()

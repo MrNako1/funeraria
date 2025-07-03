@@ -73,7 +73,8 @@ export default function TestRolesPage() {
       } else {
         addResult('Obtener usuarios', 'success', `${users.length} usuarios encontrados`, users);
         if (users.length > 0) {
-          setTestUser(users[0]);
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          setTestUser(users[0] as any);
         }
       }
 
@@ -84,7 +85,8 @@ export default function TestRolesPage() {
           .upsert({
             user_id: testUser.user_id,
             role: testUser.role // Mantener el mismo rol
-          }, {
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          } as any, {
             onConflict: 'user_id'
           });
 
@@ -126,7 +128,8 @@ export default function TestRolesPage() {
           .upsert({
             user_id: testUser.user_id,
             role: newRole
-          }, {
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          } as any, {
             onConflict: 'user_id'
           });
 

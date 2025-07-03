@@ -13,11 +13,11 @@ export const authConfig = {
   cookieOptions: {
     name: 'sb-auth-token',
     lifetime: 24 * 60 * 60, // 24 horas
-    domain: process.env.NODE_ENV === 'production' ? '.tu-dominio.com' : 'localhost',
+    domain: process.env.NODE_ENV === 'production' ? undefined : undefined, // Dejar que el navegador maneje el dominio
     path: '/',
     sameSite: 'lax',
     secure: process.env.NODE_ENV === 'production',
-    httpOnly: true
+    httpOnly: false // Permitir acceso desde JavaScript para limpieza
   }
 }
 
@@ -30,19 +30,41 @@ export const clearAuthCookies = () => {
       'supabase.auth.token',
       'sb-access-token',
       'sb-refresh-token',
-      'supabase-auth-token'
+      'supabase-auth-token',
+      'sb-', // Prefijo general de Supabase
+      'supabase-'
     ]
     
     // Limpiar cookies específicas de autenticación
     authCookieNames.forEach(cookieName => {
+      // Limpiar sin dominio específico
       document.cookie = `${cookieName}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;`
-      document.cookie = `${cookieName}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/; domain=${window.location.hostname}`
-      document.cookie = `${cookieName}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/; domain=.${window.location.hostname}`
+      
+      // Limpiar con dominio actual
+      if (typeof window !== 'undefined' && window.location.hostname) {
+        document.cookie = `${cookieName}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/; domain=${window.location.hostname}`
+        document.cookie = `${cookieName}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/; domain=.${window.location.hostname}`
+      }
     })
     
     // Limpiar localStorage y sessionStorage
-    localStorage.removeItem('supabase.auth.token')
-    sessionStorage.removeItem('supabase.auth.token')
+    if (typeof window !== 'undefined') {
+      localStorage.removeItem('supabase.auth.token')
+      sessionStorage.removeItem('supabase.auth.token')
+      
+      // Limpiar todas las claves relacionadas con Supabase
+      Object.keys(localStorage).forEach(key => {
+        if (key.includes('supabase') || key.includes('auth')) {
+          localStorage.removeItem(key)
+        }
+      })
+      
+      Object.keys(sessionStorage).forEach(key => {
+        if (key.includes('supabase') || key.includes('auth')) {
+          sessionStorage.removeItem(key)
+        }
+      })
+    }
     
     console.log('✅ Cookies de autenticación limpiadas')
   } catch (error) {
@@ -53,6 +75,11 @@ export const clearAuthCookies = () => {
 // Función para limpiar datos de sesión del navegador
 export const clearBrowserSession = () => {
   try {
+    if (typeof window === 'undefined') {
+      console.log('⚠️ No estamos en el navegador')
+      return
+    }
+    
     // Limpiar localStorage
     localStorage.clear()
     
@@ -66,7 +93,7 @@ export const clearBrowserSession = () => {
       const name = eqPos > -1 ? cookie.substr(0, eqPos).trim() : cookie.trim()
       
       // Eliminar cookies relacionadas con autenticación
-      if (name.includes('supabase') || name.includes('auth') || name.includes('session')) {
+      if (name.includes('supabase') || name.includes('auth') || name.includes('session') || name.startsWith('sb-')) {
         document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;`
       }
     })
@@ -80,9 +107,18 @@ export const clearBrowserSession = () => {
 // Función para verificar si hay una sesión persistente
 export const checkPersistentSession = () => {
   try {
+    if (typeof window === 'undefined') {
+      return {
+        hasLocalStorage: false,
+        hasSessionStorage: false,
+        hasCookies: false,
+        hasAnySession: false
+      }
+    }
+    
     const hasLocalStorage = localStorage.getItem('supabase.auth.token') !== null
     const hasSessionStorage = sessionStorage.getItem('supabase.auth.token') !== null
-    const hasCookies = document.cookie.includes('supabase')
+    const hasCookies = document.cookie.includes('supabase') || document.cookie.includes('sb-')
     
     return {
       hasLocalStorage,

@@ -70,8 +70,10 @@ export default function EditMemorialModal({ memorial, isOpen, onClose, onUpdate 
           comentarios: formData.comentarios,
           logros: formData.logros,
           foto: formData.foto
-        })
-        .eq('id', memorial.id)
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        } as any)
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        .eq('id', memorial.id as any)
 
       if (error) {
         console.error('Error al actualizar memorial:', error)

@@ -228,10 +228,12 @@ export default function AuthPage() {
       const { data: currentRole } = await supabase
         .from('user_roles')
         .select('role')
-        .eq('user_id', editingUser.id)
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        .eq('user_id', editingUser.id as any)
         .maybeSingle()
 
-      console.log('📊 Rol actual:', currentRole?.role || 'user')
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      console.log('📊 Rol actual:', (currentRole as any)?.role || 'user')
 
       let updateSuccess = false
 
@@ -264,7 +266,8 @@ export default function AuthPage() {
           .upsert({
             user_id: editingUser.id,
             role: newRole
-          }, {
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          } as any, {
             onConflict: 'user_id'
           })
 
@@ -280,10 +283,12 @@ export default function AuthPage() {
       const { data: updatedRole, error: verifyError } = await supabase
         .from('user_roles')
         .select('role')
-        .eq('user_id', editingUser.id)
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        .eq('user_id', editingUser.id as any)
         .maybeSingle()
 
-      console.log('📊 Rol después de actualización:', updatedRole?.role || 'user')
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      console.log('📊 Rol después de actualización:', (updatedRole as any)?.role || 'user')
 
       if (verifyError) {
         console.error('❌ Error verificando rol actualizado:', verifyError)
@@ -351,7 +356,8 @@ export default function AuthPage() {
       const { error: favoritesError } = await supabase
         .from('memorial_favorites')
         .delete()
-        .eq('user_id', deletingUser.id)
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        .eq('user_id', deletingUser.id as any)
 
       if (favoritesError) {
         console.error('Error eliminando favoritos:', favoritesError)
@@ -364,7 +370,8 @@ export default function AuthPage() {
       const { error: roleError } = await supabase
         .from('user_roles')
         .delete()
-        .eq('user_id', deletingUser.id)
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        .eq('user_id', deletingUser.id as any)
 
       if (roleError) {
         console.error('Error eliminando rol:', roleError)

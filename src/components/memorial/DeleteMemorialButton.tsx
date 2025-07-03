@@ -27,7 +27,8 @@ export default function DeleteMemorialButton({ memorialId, memorialName }: Delet
       const { error } = await supabase
         .from('plantillas')
         .delete()
-        .eq('id', memorialId)
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        .eq('id', memorialId as any)
 
       if (error) {
         console.error('Error al eliminar memorial:', error)

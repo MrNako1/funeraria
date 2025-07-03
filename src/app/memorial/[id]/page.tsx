@@ -11,7 +11,8 @@ export default async function MemorialPage({ params }: { params: Promise<{ id: s
   const { data: memorial, error } = await supabase
     .from('plantillas')
     .select('*')
-    .eq('id', id)
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    .eq('id', id as any)
     .single()
 
   if (error) {
@@ -22,5 +23,5 @@ export default async function MemorialPage({ params }: { params: Promise<{ id: s
     throw new Error('Memorial no encontrado')
   }
 
-  return <MemorialClient memorial={memorial as Memorial} />
+  return <MemorialClient memorial={memorial as unknown as Memorial} />
 } 

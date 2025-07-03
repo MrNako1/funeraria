@@ -4,6 +4,9 @@ import { useState, useEffect, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
 import { useRole } from '@/hooks/useRole'
+import type { Tables } from '@/types/supabase'
+
+type Plantilla = Tables<'plantillas'>
 
 interface MemorialFormData {
   primer_nombre: string
@@ -49,7 +52,7 @@ function CrearMemorialContent() {
 
   // Cargar datos del memorial si estamos editando
   useEffect(() => {
-    if (editId) {
+    if (editId && typeof editId === 'string') {
       loadMemorialData(editId)
     }
   }, [editId])
@@ -57,10 +60,12 @@ function CrearMemorialContent() {
   const loadMemorialData = async (id: string) => {
     try {
       setIsLoading(true)
+      
       const { data, error } = await supabase
         .from('plantillas')
         .select('*')
-        .eq('id', id)
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        .eq('id', id as any)
         .single()
 
       if (error) {
@@ -70,17 +75,19 @@ function CrearMemorialContent() {
       }
 
       if (data) {
+        // Usar type assertion con unknown para evitar errores de TypeScript
+        const plantilla = data as unknown as Plantilla
         setFormData({
-          primer_nombre: data.primer_nombre || '',
-          segundo_nombre: data.segundo_nombre || '',
-          apellido_paterno: data.apellido_paterno || '',
-          apellido_materno: data.apellido_materno || '',
-          fecha_nacimiento: data.fecha_nacimiento || '',
-          fecha_fallecimiento: data.fecha_fallecimiento || '',
-          biografia: data.biografia || '',
-          comentarios: data.comentarios || '',
-          logros: data.logros || '',
-          foto: data.foto || ''
+          primer_nombre: plantilla.primer_nombre || '',
+          segundo_nombre: plantilla.segundo_nombre || '',
+          apellido_paterno: plantilla.apellido_paterno || '',
+          apellido_materno: plantilla.apellido_materno || '',
+          fecha_nacimiento: plantilla.fecha_nacimiento || '',
+          fecha_fallecimiento: plantilla.fecha_fallecimiento || '',
+          biografia: plantilla.biografia || '',
+          comentarios: plantilla.comentarios || '',
+          logros: plantilla.logros || '',
+          foto: plantilla.foto || ''
         })
         setIsEditing(true)
       }
@@ -103,23 +110,25 @@ function CrearMemorialContent() {
     try {
       setIsLoading(true)
 
-      if (isEditing && editId) {
+      if (isEditing && editId && typeof editId === 'string') {
         // Actualizar memorial existente
         const { error } = await supabase
           .from('plantillas')
           .update({
             primer_nombre: formData.primer_nombre,
-            segundo_nombre: formData.segundo_nombre,
+            segundo_nombre: formData.segundo_nombre || null,
             apellido_paterno: formData.apellido_paterno,
-            apellido_materno: formData.apellido_materno,
+            apellido_materno: formData.apellido_materno || null,
             fecha_nacimiento: formData.fecha_nacimiento,
             fecha_fallecimiento: formData.fecha_fallecimiento,
             biografia: formData.biografia,
-            comentarios: formData.comentarios,
-            logros: formData.logros,
-            foto: formData.foto
-          })
-          .eq('id', editId)
+            comentarios: formData.comentarios || null,
+            logros: formData.logros || null,
+            foto: formData.foto || null
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          } as any)
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          .eq('id', editId as any)
 
         if (error) {
           console.error('Error al actualizar memorial:', error)
@@ -135,18 +144,19 @@ function CrearMemorialContent() {
         // Crear nuevo memorial
         const { data, error } = await supabase
           .from('plantillas')
-          .insert([{
+          .insert({
             primer_nombre: formData.primer_nombre,
-            segundo_nombre: formData.segundo_nombre,
+            segundo_nombre: formData.segundo_nombre || null,
             apellido_paterno: formData.apellido_paterno,
-            apellido_materno: formData.apellido_materno,
+            apellido_materno: formData.apellido_materno || null,
             fecha_nacimiento: formData.fecha_nacimiento,
             fecha_fallecimiento: formData.fecha_fallecimiento,
             biografia: formData.biografia,
-            comentarios: formData.comentarios,
-            logros: formData.logros,
-            foto: formData.foto
-          }])
+            comentarios: formData.comentarios || null,
+            logros: formData.logros || null,
+            foto: formData.foto || null
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          } as any)
           .select()
           .single()
 
@@ -156,8 +166,12 @@ function CrearMemorialContent() {
           return
         }
 
-        alert('Memorial creado exitosamente')
-        router.push(`/memorial/${data.id}`)
+        if (data) {
+          // Usar type assertion con unknown para evitar errores de TypeScript
+          const newMemorial = data as unknown as Plantilla
+          alert('Memorial creado exitosamente')
+          router.push(`/memorial/${newMemorial.id}`)
+        }
       }
     } catch (error) {
       console.error('Error inesperado:', error)

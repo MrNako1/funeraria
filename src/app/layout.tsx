@@ -3,6 +3,8 @@ import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import Navbar from "@/components/Navbar";
 import { AuthProvider } from '@/lib/auth-context'
+import AuthDebug from '@/components/admin/AuthDebug'
+import CookieDebug from '@/components/admin/CookieDebug'
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -34,6 +36,13 @@ export default function RootLayout({
           <main className="min-h-screen">
             {children}
           </main>
+          {/* Componentes de debug - solo visibles en desarrollo */}
+          {process.env.NODE_ENV === 'development' && (
+            <>
+              <AuthDebug />
+              <CookieDebug />
+            </>
+          )}
         </AuthProvider>
       </body>
     </html>
