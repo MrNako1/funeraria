@@ -16,6 +16,12 @@ export async function middleware(req: NextRequest) {
             name,
             value,
             ...options,
+            // Configuración de seguridad para cookies
+            httpOnly: true,
+            secure: process.env.NODE_ENV === 'production',
+            sameSite: 'lax',
+            path: '/',
+            maxAge: 24 * 60 * 60, // 24 horas
           })
         },
         remove: (name, options) => {
@@ -23,6 +29,13 @@ export async function middleware(req: NextRequest) {
             name,
             value: '',
             ...options,
+            // Configuración de seguridad para eliminar cookies
+            httpOnly: true,
+            secure: process.env.NODE_ENV === 'production',
+            sameSite: 'lax',
+            path: '/',
+            maxAge: 0,
+            expires: new Date(0),
           })
         },
       },

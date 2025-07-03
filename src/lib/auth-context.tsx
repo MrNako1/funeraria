@@ -4,6 +4,7 @@ import { createContext, useContext, useEffect, useState, useCallback } from 'rea
 import { User } from '@supabase/supabase-js'
 import { useRouter } from 'next/navigation'
 import { supabase } from './supabase'
+import { clearAuthCookies } from './auth-config'
 
 // Actualizar el tipo de rol para incluir 'cliente'
 type UserRole = 'user' | 'admin' | 'cliente'
@@ -126,14 +127,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setUser(null)
       setUserRole(null)
       
-      // Limpiar localStorage y sessionStorage
-      localStorage.clear()
-      sessionStorage.clear()
-      
-      // Limpiar todas las cookies
-      document.cookie.split(";").forEach(function(c) { 
-        document.cookie = c.replace(/^ +/, "").replace(/=.*/, "=;expires=" + new Date().toUTCString() + ";path=/"); 
-      })
+      // Limpiar solo cookies de autenticación
+      clearAuthCookies()
       
       // Llamar a Supabase signOut
       await supabase.auth.signOut()
@@ -272,14 +267,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       
       // Limpiar cookies y localStorage
       try {
-        localStorage.removeItem('supabase.auth.token');
-        sessionStorage.clear();
-        
-        // Limpiar cookies de Supabase
-        document.cookie.split(";").forEach(function(c) { 
-          document.cookie = c.replace(/^ +/, "").replace(/=.*/, "=;expires=" + new Date().toUTCString() + ";path=/"); 
-        });
-        
+        clearAuthCookies();
         console.log('✅ Estado local limpiado');
       } catch (cleanupError) {
         console.warn('⚠️ Error limpiando estado local:', cleanupError);

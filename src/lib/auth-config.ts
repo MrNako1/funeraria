@@ -13,9 +13,40 @@ export const authConfig = {
   cookieOptions: {
     name: 'sb-auth-token',
     lifetime: 24 * 60 * 60, // 24 horas
-    domain: '',
+    domain: process.env.NODE_ENV === 'production' ? '.tu-dominio.com' : 'localhost',
     path: '/',
-    sameSite: 'lax'
+    sameSite: 'lax',
+    secure: process.env.NODE_ENV === 'production',
+    httpOnly: true
+  }
+}
+
+// Función para limpiar solo cookies de autenticación
+export const clearAuthCookies = () => {
+  try {
+    // Lista de cookies específicas de autenticación
+    const authCookieNames = [
+      'sb-auth-token',
+      'supabase.auth.token',
+      'sb-access-token',
+      'sb-refresh-token',
+      'supabase-auth-token'
+    ]
+    
+    // Limpiar cookies específicas de autenticación
+    authCookieNames.forEach(cookieName => {
+      document.cookie = `${cookieName}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;`
+      document.cookie = `${cookieName}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/; domain=${window.location.hostname}`
+      document.cookie = `${cookieName}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/; domain=.${window.location.hostname}`
+    })
+    
+    // Limpiar localStorage y sessionStorage
+    localStorage.removeItem('supabase.auth.token')
+    sessionStorage.removeItem('supabase.auth.token')
+    
+    console.log('✅ Cookies de autenticación limpiadas')
+  } catch (error) {
+    console.error('❌ Error limpiando cookies de autenticación:', error)
   }
 }
 
