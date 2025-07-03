@@ -1,17 +1,12 @@
 const { createClient } = require('@supabase/supabase-js')
 require('dotenv').config({ path: '.env.local' })
 
-// Configuración de Supabase
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
-const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
-
-console.log('🔍 Diagnóstico de Cookies - Funeraria')
-console.log('=====================================')
+console.log('🔍 Diagnóstico Avanzado de Cookies - Funeraria')
+console.log('==============================================\n')
 
 // Verificar variables de entorno
-console.log('\n🔧 Verificando variables de entorno...')
-console.log(`   NEXT_PUBLIC_SUPABASE_URL: ${supabaseUrl ? '✅ Configurado' : '❌ Faltante'}`)
-console.log(`   NEXT_PUBLIC_SUPABASE_ANON_KEY: ${supabaseAnonKey ? '✅ Configurado' : '❌ Faltante'}`)
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
 
 if (!supabaseUrl || !supabaseAnonKey) {
   console.error('\n❌ Faltan las variables de entorno de Supabase')
@@ -23,6 +18,10 @@ if (!supabaseUrl || !supabaseAnonKey) {
   console.log('3. Reinicia el servidor de desarrollo')
   process.exit(1)
 }
+
+console.log('🔧 Verificando variables de entorno...')
+console.log('   NEXT_PUBLIC_SUPABASE_URL:', supabaseUrl ? '✅ Configurado' : '❌ Faltante')
+console.log('   NEXT_PUBLIC_SUPABASE_ANON_KEY:', supabaseAnonKey ? '✅ Configurado' : '❌ Faltante')
 
 const supabase = createClient(supabaseUrl, supabaseAnonKey, {
   auth: {
@@ -81,18 +80,67 @@ async function debugCookies() {
     configFiles.forEach(file => {
       if (fs.existsSync(file)) {
         console.log(`   ✅ ${file}: Existe`)
+        
+        // Verificar contenido específico
+        const content = fs.readFileSync(file, 'utf8')
+        if (file === 'src/middleware.ts') {
+          const hasHttpOnly = content.includes('httpOnly: true')
+          const hasSecure = content.includes('secure: process.env.NODE_ENV === \'production\'')
+          console.log(`      - httpOnly configurado: ${hasHttpOnly ? '✅' : '❌'}`)
+          console.log(`      - secure configurado: ${hasSecure ? '✅' : '❌'}`)
+        }
+        if (file === 'src/lib/auth-config.ts') {
+          const hasClearAuthCookies = content.includes('clearAuthCookies')
+          const hasCheckPersistentSession = content.includes('checkPersistentSession')
+          console.log(`      - clearAuthCookies: ${hasClearAuthCookies ? '✅' : '❌'}`)
+          console.log(`      - checkPersistentSession: ${hasCheckPersistentSession ? '✅' : '❌'}`)
+        }
       } else {
         console.log(`   ❌ ${file}: No existe`)
       }
     })
     
-    // Recomendaciones
-    console.log('\n💡 Recomendaciones:')
+    // Verificar problemas comunes
+    console.log('\n🔍 Verificando problemas comunes...')
+    
+    // Verificar si hay configuraciones duplicadas
+    const supabaseContent = fs.readFileSync('src/lib/supabase.ts', 'utf8')
+    const authConfigContent = fs.readFileSync('src/lib/auth-config.ts', 'utf8')
+    
+    const hasDuplicateConfig = supabaseContent.includes('persistSession') && authConfigContent.includes('persistSession')
+    console.log(`   - Configuraciones duplicadas: ${hasDuplicateConfig ? '⚠️  Sí' : '✅ No'}`)
+    
+    // Verificar configuración de dominio
+    const hasLocalhostDomain = authConfigContent.includes('localhost')
+    console.log(`   - Dominio localhost configurado: ${hasLocalhostDomain ? '✅' : '❌'}`)
+    
+    // Recomendaciones específicas
+    console.log('\n💡 Recomendaciones específicas:')
     console.log('1. Verifica que las cookies estén habilitadas en el navegador')
     console.log('2. Asegúrate de que el dominio esté configurado correctamente')
     console.log('3. En producción, usa HTTPS para cookies seguras')
     console.log('4. Verifica que no haya bloqueadores de cookies activos')
     console.log('5. Usa el modo incógnito para probar sin interferencias')
+    console.log('6. Las cookies ahora están configuradas como httpOnly para mayor seguridad')
+    console.log('7. Para desarrollo, el dominio está configurado como localhost')
+    
+    // Comandos para verificar en el navegador
+    console.log('\n🌐 Comandos para verificar en el navegador:')
+    console.log('   // Verificar cookies')
+    console.log('   console.log(document.cookie)')
+    console.log('   ')
+    console.log('   // Verificar localStorage')
+    console.log('   console.log(localStorage.getItem("supabase.auth.token"))')
+    console.log('   ')
+    console.log('   // Verificar sessionStorage')
+    console.log('   console.log(sessionStorage.getItem("supabase.auth.token"))')
+    console.log('   ')
+    console.log('   // Limpiar manualmente')
+    console.log('   localStorage.clear()')
+    console.log('   sessionStorage.clear()')
+    console.log('   document.cookie.split(";").forEach(function(c) {')
+    console.log('     document.cookie = c.replace(/^ +/, "").replace(/=.*/, "=;expires=" + new Date().toUTCString() + ";path=/");')
+    console.log('   })')
     
     console.log('\n✅ Diagnóstico completado')
     
@@ -129,5 +177,6 @@ function checkSpecificCookies() {
   console.log('   })')
 }
 
+// Ejecutar diagnóstico
 debugCookies()
 checkSpecificCookies() 

@@ -13,18 +13,18 @@ export const authConfig = {
   cookieOptions: {
     name: 'sb-auth-token',
     lifetime: 24 * 60 * 60, // 24 horas
-    domain: process.env.NODE_ENV === 'production' ? undefined : undefined, // Dejar que el navegador maneje el dominio
+    domain: process.env.NODE_ENV === 'production' ? undefined : 'localhost', // Configurar dominio correctamente
     path: '/',
     sameSite: 'lax',
     secure: process.env.NODE_ENV === 'production',
-    httpOnly: false // Permitir acceso desde JavaScript para limpieza
+    httpOnly: true // Mejorar seguridad - solo acceso desde servidor
   }
 }
 
 // Función para limpiar solo cookies de autenticación
 export const clearAuthCookies = () => {
   try {
-    // Lista de cookies específicas de autenticación
+    // Lista de cookies específicas de autenticación de Supabase
     const authCookieNames = [
       'sb-auth-token',
       'supabase.auth.token',
@@ -44,6 +44,12 @@ export const clearAuthCookies = () => {
       if (typeof window !== 'undefined' && window.location.hostname) {
         document.cookie = `${cookieName}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/; domain=${window.location.hostname}`
         document.cookie = `${cookieName}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/; domain=.${window.location.hostname}`
+      }
+      
+      // Limpiar con localhost para desarrollo
+      if (process.env.NODE_ENV === 'development') {
+        document.cookie = `${cookieName}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/; domain=localhost`
+        document.cookie = `${cookieName}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/; domain=.localhost`
       }
     })
     

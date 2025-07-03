@@ -17,7 +17,7 @@ export async function middleware(req: NextRequest) {
             value,
             ...options,
             // Configuración de seguridad para cookies
-            httpOnly: false, // Permitir acceso desde JavaScript para limpieza
+            httpOnly: true, // Mejorar seguridad - solo acceso desde servidor
             secure: process.env.NODE_ENV === 'production',
             sameSite: 'lax',
             path: '/',
@@ -30,7 +30,7 @@ export async function middleware(req: NextRequest) {
             value: '',
             ...options,
             // Configuración de seguridad para eliminar cookies
-            httpOnly: false, // Permitir acceso desde JavaScript para limpieza
+            httpOnly: true, // Mejorar seguridad - solo acceso desde servidor
             secure: process.env.NODE_ENV === 'production',
             sameSite: 'lax',
             path: '/',
