@@ -64,11 +64,8 @@ const funeralHomes: FuneralHome[] = [
 
 export default function FuneralHomesCarousel() {
   const [currentIndex, setCurrentIndex] = useState(0);
-  const [isAutoPlaying, setIsAutoPlaying] = useState(true);
 
   useEffect(() => {
-    if (!isAutoPlaying) return;
-
     const interval = setInterval(() => {
       setCurrentIndex((prevIndex) => 
         prevIndex === funeralHomes.length - 1 ? 0 : prevIndex + 1
@@ -76,7 +73,7 @@ export default function FuneralHomesCarousel() {
     }, 5000);
 
     return () => clearInterval(interval);
-  }, [isAutoPlaying]);
+  }, []);
 
   const nextSlide = () => {
     setCurrentIndex((prevIndex) => 
@@ -105,7 +102,7 @@ export default function FuneralHomesCarousel() {
         
         <div className="relative">
           {/* Carrusel principal */}
-          <div className="relative h-96 bg-gray-100 rounded-lg overflow-hidden">
+          <div className="relative h-96 bg-gray-100 rounded-lg overflow-hidden group">
             {/* Imagen de fondo con overlay */}
             <div className="absolute inset-0">
               <FuneralHomeImage name={currentFuneralHome.name} className="w-full h-full" />
@@ -146,16 +143,18 @@ export default function FuneralHomesCarousel() {
               </div>
             </div>
 
-            {/* Botones de navegación */}
+            {/* Botones de navegación mejorados */}
             <button
               onClick={prevSlide}
-              className="absolute left-4 top-1/2 transform -translate-y-1/2 bg-white bg-opacity-80 hover:bg-opacity-100 text-gray-800 p-2 rounded-full shadow-lg transition-all duration-200"
+              className="absolute left-4 top-1/2 transform -translate-y-1/2 bg-white bg-opacity-90 hover:bg-opacity-100 text-gray-800 p-3 rounded-full shadow-lg transition-all duration-200 hover:scale-110 z-20 opacity-0 group-hover:opacity-100"
+              aria-label="Anterior funeraria"
             >
               <ChevronLeftIcon className="w-6 h-6" />
             </button>
             <button
               onClick={nextSlide}
-              className="absolute right-4 top-1/2 transform -translate-y-1/2 bg-white bg-opacity-80 hover:bg-opacity-100 text-gray-800 p-2 rounded-full shadow-lg transition-all duration-200"
+              className="absolute right-4 top-1/2 transform -translate-y-1/2 bg-white bg-opacity-90 hover:bg-opacity-100 text-gray-800 p-3 rounded-full shadow-lg transition-all duration-200 hover:scale-110 z-20 opacity-0 group-hover:opacity-100"
+              aria-label="Siguiente funeraria"
             >
               <ChevronRightIcon className="w-6 h-6" />
             </button>
@@ -172,22 +171,9 @@ export default function FuneralHomesCarousel() {
                     ? 'bg-blue-600' 
                     : 'bg-gray-300 hover:bg-gray-400'
                 }`}
+                aria-label={`Ir a funeraria ${index + 1}`}
               />
             ))}
-          </div>
-
-          {/* Controles de reproducción */}
-          <div className="flex justify-center mt-4">
-            <button
-              onClick={() => setIsAutoPlaying(!isAutoPlaying)}
-              className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
-                isAutoPlaying
-                  ? 'bg-red-600 text-white hover:bg-red-700'
-                  : 'bg-green-600 text-white hover:bg-green-700'
-              }`}
-            >
-              {isAutoPlaying ? 'Pausar' : 'Reproducir'}
-            </button>
           </div>
         </div>
 
@@ -210,8 +196,6 @@ export default function FuneralHomesCarousel() {
             ))}
           </div>
         </div>
-
-
       </div>
     </div>
   );
